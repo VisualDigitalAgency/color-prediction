@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* AuraWin — global reset + keyframes ported verbatim from the prototype
+   (AuraWin Web.html). Theme CSS variables are injected at runtime by
+   ThemeProvider onto <html data-theme="…">; see lib/theme/. */
+
+/* ---- Tailwind v4 theme tokens bound to runtime CSS variables ----
+   Brand colors stay stable across all 3 themes (green/red/violet). The
+   per-theme vars (--header-grad, --glow-*, --radius, surfaces, text) are set
+   by ThemeProvider; tokens below let Tailwind utilities resolve them, e.g.
+   `text-green`, `bg-surface`, `shadow-[var(--glow-green)]`. */
+@theme inline {
+  --color-green: var(--green, #15e08a);
+  --color-red: var(--red, #ff3460);
+  --color-violet: var(--violet, #b14bff);
+  --color-bg: var(--bg, #06060d);
+  --color-surface: var(--surface, #0d0d1a);
+  --color-text: var(--text, #ffffff);
+  --color-muted: var(--muted, rgba(255, 255, 255, 0.6));
+  --font-sans: var(--app-font, "Poppins", system-ui, sans-serif);
+}
+
+/* ---- reset (verbatim from prototype) ---- */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg, #06060d);
+}
+body {
+  font-family: var(--app-font, "Poppins", system-ui, sans-serif);
+  color: var(--text, #ffffff);
+}
+button {
+  font-family: inherit;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+input {
+  -webkit-appearance: none;
+}
+
+/* ---- keyframes (verbatim from prototype) ---- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(920px) rotate(760deg); opacity: 0; }
+}
+
+/* Respect reduced-motion (a11y requirement; see docs/A11Y.md) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
