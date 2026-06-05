@@ -9,7 +9,8 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-05 · **Current step:** 1 (Init) — in progress
+**Last updated:** 2026-06-05 · **Current step:** 1 (Init) ✅ done — next: step 2 (types + money + strings)
+**PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
 
@@ -58,7 +59,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 
 | # | Step | Owner agent | Depends on | Status | Notes |
 |---|------|-------------|------------|--------|-------|
-| 1 | Init: scaffold, globals.css, dirs, knowledge scaffolding, process.md | init | — | ◑ | Next 16 + Tailwind v4 (CSS-first `@theme`, no `tailwind.config.ts`) |
+| 1 | Init: scaffold, globals.css, dirs, knowledge scaffolding, process.md | init | — | ☑ | Next 16 + Tailwind v4 (CSS-first `@theme`, no `tailwind.config.ts`); `npm run build` ✓ |
 | 2 | `types/*` + `lib/money.ts` (minor-units) + `lib/strings.ts` (i18n-lite) | types-agent | 1 | ☐ | schema-first |
 | 3 | Theme system: `themes.ts`, `ThemeProvider`, no-flash script, `next/font` (×3) | theme-agent | 2 | ☐ | preload all 3 fonts (ADR 0007) |
 | 4 | `lib/fair/*` pure fns + golden-value unit tests | engine-agent | 2 | ☐ | match prototype exactly; no "provably fair" label |
