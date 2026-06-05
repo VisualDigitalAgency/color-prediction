@@ -184,9 +184,11 @@ describe('no float rounding drift — 100-bet settlement', () => {
       balance = add(balance, winAmount);
     }
 
-    // With 2× payout and 100 bets, balance should be unchanged (break-even)
-    expect(balance).toBe(initialBalance);
-    // Must be an exact integer
+    // At 2× payout, each winning bet nets +1× stake (2000 credited − 1000 deducted = +1000).
+    // After 100 wins: initialBalance + 100 * (mul(betStake, payout) − betStake)
+    const expectedBalance = initialBalance + 100 * (mul(betStake, payout) - betStake);
+    expect(balance).toBe(expectedBalance); // 1_100_000
+    // Key property: result must be an exact integer — no float drift
     expect(Number.isInteger(balance)).toBe(true);
   });
 
