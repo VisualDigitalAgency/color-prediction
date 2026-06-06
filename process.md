@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 7 (primitives + Icon + color-blind cue) ✅ done — next: step 8 (`(app)` shell + nav + auth/age gates + overlays)
+**Last updated:** 2026-06-06 · **Current step:** 8 (`(app)` shell + nav + auth/age gates + overlays) ✅ done — next: step 9 (Landing `/` + AuthModal)
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -66,7 +66,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | 5 | `DataRepository` (async) + `LocalStorageRepository` + seed data | store-agent | 2,4 | ☑ | versioned keys `aurawin:v1:*`; SSR-safe; 23 vitest tests pass; `tsc` clean |
 | 6 | Store (Zustand): hydrate, debounced persist, timer/`useNow`, settlement, `useApp()` | store-agent | 4,5 | ☑ | async actions return Promises; idempotent settlement; slice-subscribed `useApp()`; 19 store tests; `tsc` clean |
 | 7 | Primitives + Icon (+ color-blind cue) | primitives-agent | 3,6 | ☑ | Pass A inline-parity; Icon + Button/Card/SectionHead/CountUp/ResultBall + Sheet/Toaster/Celebration; ResultBall G/R/V cue; Celebration honors reduced-motion; `tsc` clean. diff vs screenshot crops deferred to pixel-QA gate |
-| 8 | `(app)/layout.tsx` shell + `lib/nav.ts` + auth gate + AgeGate + overlays | shell-agent | 6,7 | ☐ | |
+| 8 | `(app)/layout.tsx` shell + `lib/nav.ts` + auth gate + AgeGate + overlays | shell-agent | 6,7 | ☑ | Pass A inline-parity; Sidebar 248px + TopBar + grid byte-identical to prototype `WebFrame`; `lib/nav.ts` (ROUTES/NAV_ITEMS/keyForPath, deposit+withdraw→wallet group); `app/providers.tsx` single 'use client' boundary (ThemeProvider + useHydration + useNow + Toaster/Celebration/AgeGate mounted once); AgeGate + auth gate render nothing/stable placeholder until `hydrated` (no flash, no SSR mismatch); `tsc` clean + `next build` ✓. MobileNav stubbed (full drawer = step 13) |
 | 9 | Landing `/` + AuthModal + age-gate + "simulated" disclaimer | shell-agent | 7,8 | ☐ | |
 | 10 | Screens **Pass A** (inline-parity) | screen-porter ×N | 8,9 | ☐ | see screen table |
 | 11 | Screens **Pass B** (Tailwind refactor) | tailwind-refactor | 10 | ☐ | zero pixel regression |

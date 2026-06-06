@@ -4,6 +4,44 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 8 — App shell `(app)` + nav map + auth/age gates + global overlays (Pass A, inline parity):**
+  ported VERBATIM from the prototype `WebFrame` authed branch and `Sidebar`/`TopBar`
+  (`/tmp/proto_extract/web/{web-app,web-shell}.jsx`); every `style={{…}}` object byte-identical,
+  all colors `var(--…)`, the `color-mix(in srgb, var(--accent) 16%, transparent)` active highlight
+  preserved. Routing moved from the in-memory `app.navigate(key)` to real App Router URLs (ADR 0003).
+  - `lib/nav.ts`: single source of truth for screen-key ↔ route. `ROUTES` (home→`/lobby`, game→`/game`,
+    wallet/deposit/withdraw/history/rewards/referral/vip/profile/settings→`/<key>`), `TITLES` (from
+    `lib/strings`), `NAV_ITEMS` (ordered Sidebar list — key/route/label/icon/badge, mirrors the
+    prototype `NAV` order + "LIVE" badge on game), and helpers `routeForKey(key)` + `keyForPath(pathname)`
+    (longest-prefix match for nested routes; `/deposit` + `/withdraw` collapse into the `wallet` group to
+    match the prototype's active-highlight rule).
+  - `components/shell/Sidebar.tsx` (`'use client'`): 248px rail — brand mark, nav with active highlight
+    derived from `usePathname()` via `keyForPath`, VIP progress card, log-out (clears auth →
+    `router.replace('/')`). `router.push(route)` replaces `app.navigate`.
+  - `components/shell/TopBar.tsx` (`'use client'`): sticky blur header — title (passed by the layout),
+    balance pill via `formatMoney(app.totalBalance())` (integer minor-units across the 4 sub-wallets, not
+    the prototype's single `wallet.main` float), Deposit button → `/deposit`, bell + avatar.
+  - `components/shell/AgeGate.tsx` (`'use client'`): blocking 18+ modal shown until `settings.ageConfirmed`.
+    Copy from `lib/strings.ts` (`ageGate` + `app.disclaimer` — includes "simulated", "no real money", "18+").
+    Confirm calls `setSetting('ageConfirmed', true)` (persisted durably). **No flash / SSR-safe:** renders
+    NOTHING until `hydrated` is true, then shows the gate only when `!ageConfirmed`, so first paint (server +
+    pre-hydration client) is always empty — no mismatch, no flash-then-hide for confirmed users. Overlay
+    chrome mirrors the prototype AuthModal (`fadeIn`/`popIn`, `var(--…)`).
+  - `app/providers.tsx`: the ONE `'use client'` boundary — `<ThemeProvider>` wrapping an `AppRuntime` that
+    runs `useHydration()` (hydrate + debounced persist) and `useNow()` (250ms clock + settlement) on mount,
+    and mounts the global overlays once above all routes: `<Toaster/>`, `<Celebration/>`, `<AgeGate/>`.
+  - `app/(app)/layout.tsx` (`'use client'`): the authed route-group shell — outer `display:flex;
+    alignItems:stretch` with `<Sidebar/>` + a flex column (`<TopBar/>` + scrollable `<main>`), byte-identical
+    to the prototype grid (root sized to `100vh` for a full-page app vs the prototype's framed `100%`). Title
+    from the route via `keyForPath`→`TITLES`. **Auth gate:** after `hydrated`, unauthed users are bounced to
+    `/` via `router.replace` in an effect; a stable `var(--bg)` placeholder renders until `hydrated && authed`
+    (no hydration mismatch, no flash of authed chrome for logged-out visitors).
+  - `app/layout.tsx`: now wraps `{children}` in `<Providers>` while STAYING a server component (fonts +
+    no-flash script untouched).
+  - `components/shell/index.ts` barrel; `components/shell/MobileNav.tsx` is a minimal placeholder (renders
+    `null`) — the full responsive drawer/bottom-nav is step 13 and must not touch the ≥1100 branch.
+  - `tsc --noEmit` clean; `next build` ✓ (only `/` + `/_not-found` emitted — the `(app)` route group has no
+    pages yet; lobby/game/etc arrive in step 10). No "provably fair" strings.
 - **Step 7 — Shared UI primitives (Pass A, inline-style parity):** ported VERBATIM from
   the CDN prototype (`/tmp/proto_extract/app/{components,icons}.jsx`); `createElement(...)`
   → JSX with `style={{…}}` objects kept byte-identical (all brand/theme values stay as
