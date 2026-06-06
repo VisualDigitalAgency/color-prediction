@@ -4,6 +4,20 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 13 — Responsive pass (mobile < 1100 px):** CSS-first approach:
+  `app/globals.css` adds `drawerIn` keyframe + `@media (max-width: 1099px)` rules
+  for `.app-sidebar` (hidden via `!important` override), `.app-topbar-hamburger`
+  (shown), `.app-mobile-nav` (shown), `.app-main-content` (padding-bottom for tab
+  bar clearance). Desktop ≥1100px branch byte-identical — all changes are additive.
+  `MobileNav` fully implemented: fixed bottom tab bar (4 primary items + More button),
+  slide-out left drawer (all nav items + Profile + Settings + VIP card + logout),
+  `fadeIn` + `drawerIn` animations, `safe-area-inset-bottom` for notch clearance.
+  `TopBar` gains optional `onMenu` prop + hamburger button. `layout.tsx` owns
+  `drawerOpen` state. Also: `Lobby.tsx` — `recentResults()` now `useMemo`-d on
+  `periodIdx` (not raw `now`) to cut 4×/sec recomputation to once per period;
+  `StatusBadge.tsx` — type narrowed from `| string` to `BetStatus | TransactionStatus`.
+  tsc clean; 129/129 tests pass.
+
 - **Step 12 — Settings page Pass A (`/settings`):** `components/settings/Settings.tsx`.
   Theme picker (3 cards — Neon/Fintech/Cyber) with per-theme preview gradients, palette
   swatches, and active-state glow border; calls `useTheme().setTheme()` for immediate

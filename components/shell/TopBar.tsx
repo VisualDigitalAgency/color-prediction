@@ -30,9 +30,11 @@ import STRINGS from '@/lib/strings';
 
 export interface TopBarProps {
   title: string;
+  /** Called when the hamburger button is pressed (mobile only; hidden ≥1100px). */
+  onMenu?: () => void;
 }
 
-export function TopBar({ title }: TopBarProps) {
+export function TopBar({ title, onMenu }: TopBarProps) {
   const app = useApp();
   const router = useRouter();
 
@@ -51,6 +53,29 @@ export function TopBar({ title }: TopBarProps) {
         borderBottom: '1px solid var(--border)',
       }}
     >
+      {/* Hamburger — hidden ≥1100px via .app-topbar-hamburger CSS rule */}
+      <button
+        className="app-topbar-hamburger"
+        onClick={onMenu}
+        aria-label="Open navigation"
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 12,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text)',
+          cursor: 'pointer',
+          flexShrink: 0,
+          flexDirection: 'column',
+          gap: 5,
+          padding: 10,
+        }}
+      >
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{ width: '100%', height: 2, borderRadius: 1, background: 'currentColor' }} />
+        ))}
+      </button>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>{title}</div>
       </div>

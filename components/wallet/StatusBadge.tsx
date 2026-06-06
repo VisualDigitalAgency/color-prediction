@@ -3,8 +3,9 @@
  * Pass A port of StatusBadge from web-pages.jsx.
  */
 import * as React from 'react';
+import type { BetStatus, TransactionStatus } from '@/types';
 
-type BadgeStatus = 'success' | 'pending' | 'failed' | 'won' | 'lost' | string;
+type BadgeStatus = BetStatus | TransactionStatus;
 
 export function StatusBadge({ status }: { status: BadgeStatus }) {
   const map: Record<string, [string, string]> = {

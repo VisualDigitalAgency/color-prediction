@@ -80,6 +80,29 @@ input {
   100% { transform: translateY(920px) rotate(760deg); opacity: 0; }
 }
 
+/* ── Responsive shell helpers ──────────────────────────────────────────────── */
+
+/* Mobile-only elements are hidden by default (CSS, not inline style, so the
+   media query below can override). Desktop-only elements are never hidden via
+   CSS — they're simply absent from the DOM at mobile (or vice-versa). */
+.app-topbar-hamburger { display: none; }
+.app-mobile-nav       { display: none; }
+
+@keyframes drawerIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@media (max-width: 1099px) {
+  /* Hide desktop sidebar entirely on mobile. */
+  .app-sidebar          { display: none !important; }
+  /* Show mobile-only controls. */
+  .app-topbar-hamburger { display: flex !important; align-items: center; justify-content: center; }
+  .app-mobile-nav       { display: flex !important; }
+  /* Reserve space at the bottom for the tab bar. */
+  .app-main-content     { padding-bottom: 68px; }
+}
+
 /* Respect reduced-motion (a11y requirement; see docs/A11Y.md) */
 @media (prefers-reduced-motion: reduce) {
   *,

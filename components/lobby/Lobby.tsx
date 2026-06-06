@@ -21,7 +21,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button, Card, CountUp, ResultBall } from '@/components/primitives';
@@ -83,7 +83,13 @@ export function Lobby() {
     [L.bonusWallet, app.wallet.bonus, 'var(--gold)'],
     [L.referralWallet, app.wallet.referral, 'var(--violet)'],
   ];
-  const recent = app.recentResults(30, 8, now);
+  // Memoize: recentResults only changes when the 30s period rolls over, not every 250ms tick.
+  const periodIdx30 = Math.floor(now / (30 * 1000));
+  const recent = useMemo(
+    () => app.recentResults(30, 8, now),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [periodIdx30],
+  );
 
   return (
     <Wrap>

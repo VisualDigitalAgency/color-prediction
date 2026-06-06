@@ -25,9 +25,10 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
+import { MobileNav } from '@/components/shell/MobileNav';
 import { Sidebar } from '@/components/shell/Sidebar';
 import { TopBar } from '@/components/shell/TopBar';
 import { TITLES, keyForPath } from '@/lib/nav';
@@ -40,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const hydrated = useStore((s) => s.hydrated);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Auth gate: once we trust the persisted auth state, bounce unauthed users to
   // the landing route. Effect-only → SSR-safe, no redirect during render.
@@ -80,6 +82,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }}
     >
       <Sidebar />
+      <MobileNav
+        drawerOpen={drawerOpen}
+        onOpen={() => setDrawerOpen(true)}
+        onClose={() => setDrawerOpen(false)}
+      />
       <div
         style={{
           flex: 1,
@@ -90,8 +97,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           overflow: 'hidden',
         }}
       >
-        <TopBar title={title} />
-        <main style={{ flex: 1, overflowY: 'auto' }}>{children}</main>
+        <TopBar title={title} onMenu={() => setDrawerOpen(true)} />
+        <main className="app-main-content" style={{ flex: 1, overflowY: 'auto' }}>{children}</main>
       </div>
     </div>
   );

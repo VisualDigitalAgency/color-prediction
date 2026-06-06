@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 12 (Settings page) — ☑ done; next: step 13 (Responsive)
+**Last updated:** 2026-06-06 · **Current step:** 13 (Responsive pass) — ☑ done; next: step 14 (Tests)
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -71,7 +71,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | 10 | Screens **Pass A** (inline-parity) | screen-porter ×N | 8,9 | ☑ | all screens ported; 12 routes compile static; tsc clean; 129 tests pass |
 | 11 | Screens **Pass B** (Tailwind refactor) | tailwind-refactor | 10 | ☐ | zero pixel regression |
 | 12 | Settings page (theme picker + a11y toggles) | shell-agent | 6,7 | ☑ | Pass A; theme picker + a11y toggles; tsc clean; 129 tests pass |
-| 13 | Responsive pass (mobile nav/drawer/betslip sheet, reflow) | responsive-adapter | 10 | ☐ | ≥1100 branch byte-identical |
+| 13 | Responsive pass (mobile nav/drawer/betslip sheet, reflow) | responsive-adapter | 10 | ☑ | MobileNav bottom tab + drawer; CSS @media; ≥1100 branch byte-identical; tsc clean; 129 tests |
 | 14 | Tests: unit/component + Playwright pixel-diff CI gate | qa-agent | 10 | ☐ | settlement + wallet math |
 | 15 | Polish + finalize docs/memory/changelog | init | 13,14 | ☐ | |
 
@@ -81,18 +81,18 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 
 | Screen | Route | Pass A (parity) | Pixel-QA A | Pass B (Tailwind) | Pixel-QA B | Responsive |
 |--------|-------|:---:|:---:|:---:|:---:|:---:|
-| Landing | `/` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Lobby | `/lobby` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Game (Wingo) | `/game` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Wallet | `/wallet` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Deposit | `/deposit` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Withdraw | `/withdraw` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| History | `/history` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Rewards | `/rewards` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Referral | `/referral` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| VIP | `/vip` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Profile | `/profile` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Settings | `/settings` | ☑ | ☐ | ☐ | ☐ | ☐ |
+| Landing | `/` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Lobby | `/lobby` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Game (Wingo) | `/game` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Wallet | `/wallet` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Deposit | `/deposit` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Withdraw | `/withdraw` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| History | `/history` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Rewards | `/rewards` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Referral | `/referral` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| VIP | `/vip` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Profile | `/profile` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Settings | `/settings` | ☑ | ☐ | ☐ | ☐ | ☑ |
 
 Pixel-QA reference map (`/tmp/proto_extract/screenshots/`):
 Landing→`web-01-landing.png`/`01-web-lobby-final.png` · Lobby→`01-web-app.png` ·
