@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 9 (Landing `/` + AuthModal + "simulated" disclaimer) ✅ done — next: step 10 (Screens Pass A inline-parity)
+**Last updated:** 2026-06-06 · **Current step:** 10 (Screens Pass A) — Lobby `/lobby` ✅ done; next: Game + remaining screens
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -82,7 +82,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | Screen | Route | Pass A (parity) | Pixel-QA A | Pass B (Tailwind) | Pixel-QA B | Responsive |
 |--------|-------|:---:|:---:|:---:|:---:|:---:|
 | Landing | `/` | ☑ | ☐ | ☐ | ☐ | ☐ |
-| Lobby | `/lobby` | ☐ | ☐ | ☐ | ☐ | ☐ |
+| Lobby | `/lobby` | ☑ | ☐ | ☐ | ☐ | ☐ |
 | Game (Wingo) | `/game` | ☐ | ☐ | ☐ | ☐ | ☐ |
 | Wallet | `/wallet` | ☐ | ☐ | ☐ | ☐ | ☐ |
 | Deposit | `/deposit` | ☐ | ☐ | ☐ | ☐ | ☐ |

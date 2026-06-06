@@ -4,6 +4,13 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 10 — Lobby `/lobby` screen (Pass A, inline parity):** ported `Lobby`
+  from `web-pages.jsx` verbatim (promo + total-balance card, 4 sub-wallet stat
+  cards, games grid, live-winners feed, recent Wingo results). Money in minor-units
+  (`formatMoney`; `CountUp` via `fromMinor`); navigation via `useRouter`/`ROUTES`
+  (ADR 0003); live clock via SSR-safe `useNow()`. The prototype's "provably fair"
+  recent-round footnote replaced with demo-safe `STRINGS.game.lobbyRoundNote`.
+  Added `STRINGS.lobby` copy section. `/lobby` prerenders; tsc clean; 129 tests pass.
 - **Step 9 — Landing `/` + AuthModal + "simulated" disclaimer (Pass A, inline parity):**
   ported VERBATIM from the prototype `Landing` + `AuthModal` (`/tmp/proto_extract/web/web-shell.jsx`);
   every `style={{…}}` object byte-identical, all colors `var(--…)`, no hardcoded hex.
