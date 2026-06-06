@@ -25,11 +25,37 @@ Tailwind two-pass · Zustand · App Router routes · DataRepository seam · clie
 authority · fairness "demo" now / commit-reveal Phase 2 · preload 3 fonts. Money = minor-units.
 No "provably fair" label. Color-blind cues + age-gate required.
 
-## Status
-Step 1 (Init) — scaffold + knowledge scaffolding done; see `process.md` for the rest.
+## Status — Phase 1 COMPLETE ✓
+All 15 steps done as of 2026-06-06. Branch: `claude/codebase-review-pending-hOW4x`.
+PR #2: https://github.com/VisualDigitalAgency/color-prediction/pull/2
+
+| Step | Work | Status |
+|------|------|--------|
+| 1 | Init: scaffold, globals.css, dirs | ☑ |
+| 2 | types/* + money.ts + strings.ts | ☑ |
+| 3 | Theme system (3 themes, ThemeProvider, no-flash) | ☑ |
+| 4 | Fair engine + golden tests | ☑ |
+| 5 | DataRepository + LocalStorageRepository | ☑ |
+| 6 | Zustand store (hydrate, settle, timer, useApp) | ☑ |
+| 7 | Primitives + Icon (Pass A) | ☑ |
+| 8 | App shell + nav + auth gate + AgeGate | ☑ |
+| 9 | Landing + AuthModal + disclaimer | ☑ |
+| 10 | All 12 screens — Pass A (inline-parity) | ☑ |
+| 11 | All 12 screens — Pass B (Tailwind refactor) | ☑ |
+| 12 | Settings page (theme picker + a11y toggles) | ☑ |
+| 13 | Responsive pass (mobile nav/drawer/sheet) | ☑ |
+| 14 | Tests (198 passing) + Playwright CI + GitHub Actions | ☑ |
+| 15 | Polish + finalize docs/memory/changelog | ☑ |
+
+## What's left for Phase 2
+- Backend seam: replace LocalStorageRepository with REST/WebSocket API
+- Real auth (OTP provider, JWT session)
+- Commit-reveal fairness (ADR 0006 Phase 2)
+- Server-authoritative balances + reconciliation (ADR 0005)
+- Playwright golden snapshots: run `npm run test:e2e:update` once to capture baselines
+- Deep-research competitor analysis (was blocked on session limit — fold into docs/PRD.md §10)
 
 ## Environment notes
 - Next.js 16, React 19, Tailwind v4 (CSS-first; tokens in `globals.css`).
-- Branch: `claude/prototype-web-app-conversion-f3ZAg`. GitHub repo:
-  `visualdigitalagency/color-prediction`.
-- Deep-research (competitors) blocked on session limit; retry later and fold into PRD §10.
+- Branch: `claude/codebase-review-pending-hOW4x`. GitHub repo: `visualdigitalagency/color-prediction`.
+- Test stack: Vitest v4 (unit/component) + @testing-library/react v16 (jsdom) + Playwright v1.60 (e2e).

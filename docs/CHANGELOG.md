@@ -4,6 +4,16 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 15 — Polish + finalize docs/memory:**
+  - `memory/project-context.md`: updated status to Phase 1 complete; full step checklist;
+    Phase 2 roadmap items; environment notes (Vitest v4 + @testing-library/react v16 + Playwright v1.60).
+  - `memory/decisions-log.md`: documented Step 11/14 decisions: Pass B inline-style retention
+    policy, `color-mix()` must stay inline, Vitest jsdom split, Playwright 2% threshold, CI job shape.
+  - `docs/FAILURES.md`: promoted 4 encountered failures from Steps 11/14 with root causes +
+    fixes + commit refs (jest-dom vitest entry, auto-cleanup missing, environmentMatchGlobs,
+    color-mix Tailwind issue).
+  - `process.md`: Step 15 marked ☑; Phase 1 COMPLETE.
+
 - **Step 14 — Tests (unit/component + Playwright CI gate):**
   - **Component tests** (jsdom, `@testing-library/react` v16): 4 new test suites for
     `Button`, `Card`, `ResultBall`, and `SectionHead` primitives covering rendering,

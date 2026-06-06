@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 14 (Tests) — ☑ done; next: step 15 (Polish + finalize docs)
+**Last updated:** 2026-06-06 · **Current step:** 15 (Polish + finalize docs) — ☑ done; **Phase 1 COMPLETE**
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -73,7 +73,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | 12 | Settings page (theme picker + a11y toggles) | shell-agent | 6,7 | ☑ | Pass A; theme picker + a11y toggles; tsc clean; 129 tests pass |
 | 13 | Responsive pass (mobile nav/drawer/betslip sheet, reflow) | responsive-adapter | 10 | ☑ | MobileNav bottom tab + drawer; CSS @media; ≥1100 branch byte-identical; tsc clean; 129 tests |
 | 14 | Tests: unit/component + Playwright pixel-diff CI gate | qa-agent | 10 | ☑ | 198 tests pass (129 unit + 27 component + 42 strings/pure); Playwright config + visual.spec.ts; GitHub Actions CI (.github/workflows/ci.yml): type-check → unit → build → Playwright e2e |
-| 15 | Polish + finalize docs/memory/changelog | init | 13,14 | ☐ | |
+| 15 | Polish + finalize docs/memory/changelog | init | 13,14 | ☑ | memory/project-context.md + decisions-log.md + glossary.md updated; docs/FAILURES.md completed; CHANGELOG finalized; Phase 1 complete |
 
 ---
 
