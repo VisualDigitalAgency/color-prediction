@@ -4,6 +4,33 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 9 — Landing `/` + AuthModal + "simulated" disclaimer (Pass A, inline parity):**
+  ported VERBATIM from the prototype `Landing` + `AuthModal` (`/tmp/proto_extract/web/web-shell.jsx`);
+  every `style={{…}}` object byte-identical, all colors `var(--…)`, no hardcoded hex.
+  - `components/landing/Landing.tsx` (`'use client'`): full landing — top nav (brand + Sign in/Register),
+    hero (online-players pill, `h1` at `fontSize:58`/`letterSpacing:-1px`, gradient-clip accent line,
+    subcopy, Start playing/Watch live CTAs, `$48M+`/`180K+`/`99.2%` stats row), live-preview `<Card glow>`
+    (WINGO 30s header with live countdown via `useNow()` + `app.secondsLeft`, recent `ResultBall`s,
+    green/violet/red pick tiles), and the 4-up feature grid. Every CTA opens `<AuthModal/>`. Already-authed
+    visitors redirect to `/lobby` (`ROUTES.home`) in an effect (SSR-safe; never during render).
+  - `components/auth/AuthModal.tsx` (`'use client'`): simulated/demo phone→OTP centered portal modal
+    (`createPortal` into `document.body`, mount-gated so there's no SSR markup to mismatch). Any input
+    ≥3 chars advances to the 6-digit code step; any code confirms. **Success flow:** `app.setAuthed(true,
+    demoUser)` writes the authed flag + a demo `User` into the store, a `STRINGS.auth.welcome` success toast
+    fires, the modal closes, then the App Router `router.push('/lobby')` (ROUTES.home) — replacing the
+    prototype's in-memory `app.navigate('home')` per ADR 0003.
+  - `app/page.tsx`: thin server wrapper rendering `<Landing/>` (the `'use client'` component owns router +
+    modal + live clock).
+  - `components/landing/index.ts` + `components/auth/index.ts`: barrels.
+  - **"Provably fair" → "Fair Play (demo)":** the prototype's first feature card said "Provably fair /
+    Every round seeded & verifiable on-chain". Per the hard rule it now uses `STRINGS.landing.features.fairPlay`
+    = "Fair Play (demo)" + `fairPlayDesc` ("Every round computed from a deterministic seed — fully auditable").
+    No "provably fair" string anywhere.
+  - **Disclaimer placement:** a visible "Simulated demo — no real money. 18+. Play responsibly."
+    (`STRINGS.app.disclaimer`) line renders directly under the hero CTA buttons (`fontSize:12`,
+    `var(--text-mute)`), separate from the global blocking `<AgeGate/>` mounted in providers.
+  - All copy from `lib/strings.ts`; state via `useApp()`/`useNow()`. `tsc` clean + `next build` ✓
+    (`/` prerendered as static content with the real Landing).
 - **Step 8 — App shell `(app)` + nav map + auth/age gates + global overlays (Pass A, inline parity):**
   ported VERBATIM from the prototype `WebFrame` authed branch and `Sidebar`/`TopBar`
   (`/tmp/proto_extract/web/{web-app,web-shell}.jsx`); every `style={{…}}` object byte-identical,

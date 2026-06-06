@@ -142,7 +142,7 @@ const STRINGS = {
     welcomeBack: 'Welcome back',
     verifyCode: 'Verify your code',
     signInPrompt: 'Sign in or create an account to play.',
-    otpPrompt: 'Enter the 6-digit code sent to your number.',
+    otpPrompt: 'Enter the 6-digit code sent to your number. (Demo — any code works.)',
     phoneLabel: 'Phone or email',
     phonePlaceholder: 'Phone or email',
     otpPlaceholder: '••••••',
