@@ -4,6 +4,13 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 12 — Settings page Pass A (`/settings`):** `components/settings/Settings.tsx`.
+  Theme picker (3 cards — Neon/Fintech/Cyber) with per-theme preview gradients, palette
+  swatches, and active-state glow border; calls `useTheme().setTheme()` for immediate
+  CSS var update + `app.setTheme()` for store/persistence sync. Accessibility section:
+  `colorBlindCue` and `reducedMotion` ARIA `role="switch"` toggles wired to
+  `app.setSetting()`. Account section: `ageConfirmed` read-only status badge.
+  tsc clean; 129/129 tests pass.
 - **Step 10 — All remaining screens Pass A (game/wallet/rewards/profile cluster):**
   27 files, 3054 lines. All 12 app routes compile as static; tsc clean; 129 tests pass.
   - `/game` (`components/game/Game.tsx`): ModeTabs (4 round modes), Board (live timer
