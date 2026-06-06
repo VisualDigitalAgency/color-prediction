@@ -102,12 +102,12 @@ function Board({
     <div>
       {/* timer board */}
       <Card pad={0} style={{ overflow: 'hidden', marginBottom: 16 }}>
-        <div className="bg-[var(--header-grad)] py-[22px] px-[26px] flex items-center justify-between text-[var(--accent-ink)]">
-          <div>
+        <div className="bg-[var(--header-grad)] py-[22px] px-[26px] flex items-center justify-between gap-3 text-[var(--accent-ink)]">
+          <div className="flex-1 min-w-0">
             <div className="text-[13px] font-extrabold opacity-85 tracking-[.5px]">
               WINGO · {app.MODE_LABEL[mode as keyof typeof app.MODE_LABEL]}
             </div>
-            <div className="text-[22px] font-black mt-[3px]">
+            <div className="text-base app:text-[22px] font-black mt-[3px] truncate">
               Period {p.periodId}
             </div>
             <div className="text-[11.5px] font-bold opacity-75 mt-[5px] flex items-center gap-[5px]">
@@ -115,7 +115,7 @@ function Board({
               {STRINGS.game.fairPlay}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div className="text-xs font-extrabold opacity-80 mb-[5px]">
               {locked ? 'DRAWING…' : 'TIME REMAINING'}
             </div>

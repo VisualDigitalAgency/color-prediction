@@ -76,8 +76,8 @@ export function TopBar({ title, onMenu }: TopBarProps) {
           <div key={i} style={{ width: '100%', height: 2, borderRadius: 1, background: 'currentColor' }} />
         ))}
       </button>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>{title}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="text-lg app:text-[22px] font-black truncate" style={{ color: 'var(--text)' }}>{title}</div>
       </div>
       <div
         className="hidden app:flex items-center"

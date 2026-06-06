@@ -166,7 +166,7 @@ export function Lobby() {
       </div>
 
       {/* winners + recent */}
-      <div className="grid grid-cols-2 gap-[18px]">
+      <div className="grid grid-cols-1 app:grid-cols-2 gap-[18px]">
         <Card pad={20}>
           <div className="text-sm font-extrabold text-text mb-3.5 flex items-center gap-[7px]">
             {Icon.trophy({ size: 17, color: 'var(--gold)' })}
