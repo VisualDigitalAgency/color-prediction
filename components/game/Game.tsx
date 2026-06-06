@@ -1,7 +1,7 @@
 'use client';
 /**
  * components/game/Game.tsx — Wingo game screen.
- * Pass A: inline-parity port of /tmp/proto_extract/web/web-game.jsx.
+ * Pass B: inline styles → Tailwind v4 utilities. Logic unchanged from Pass A.
  * Adaptations:
  *  - `window.useApp()` → useApp() / useNow()
  *  - `window.fmt(x)` → formatMoney(toMinor(x)) for display-float inputs;
@@ -18,9 +18,8 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useApp } from '@/lib/store/useApp';
 import { useNow } from '@/lib/store/useNow';
-import { formatMoney, toMinor, fromMinor } from '@/lib/money';
+import { formatMoney, toMinor } from '@/lib/money';
 import { STRINGS } from '@/lib/strings';
-import { ROUTES } from '@/lib/nav';
 import { Card } from '@/components/primitives/Card';
 import { Button } from '@/components/primitives/Button';
 import { ResultBall, numColorStyle } from '@/components/primitives/ResultBall';
@@ -40,7 +39,7 @@ function ModeTabs({
   app: ReturnType<typeof useApp>;
 }) {
   return (
-    <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
+    <div className="flex flex-wrap gap-2 mb-[18px]">
       {app.MODES.map((m) => {
         const on = m === mode;
         return (
@@ -48,21 +47,12 @@ function ModeTabs({
             key={m}
             onClick={() => setMode(m)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '11px 20px',
-              borderRadius: 999,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 14,
-              fontWeight: 800,
               background: on ? 'var(--header-grad)' : 'var(--surface)',
               color: on ? 'var(--accent-ink)' : 'var(--text-dim)',
               border: on ? 'none' : '1px solid var(--border)',
               boxShadow: on ? 'var(--glow-accent)' : 'none',
-              transition: 'all .15s',
             }}
+            className="flex items-center gap-2 py-[11px] px-5 rounded-full cursor-pointer text-sm font-extrabold transition-all duration-150"
           >
             {Icon.clock({ size: 17 })}
             {app.MODE_LABEL[m as keyof typeof app.MODE_LABEL]}
@@ -112,55 +102,27 @@ function Board({
     <div>
       {/* timer board */}
       <Card pad={0} style={{ overflow: 'hidden', marginBottom: 16 }}>
-        <div
-          style={{
-            background: 'var(--header-grad)',
-            padding: '22px 26px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            color: 'var(--accent-ink)',
-          }}
-        >
+        <div className="bg-[var(--header-grad)] py-[22px] px-[26px] flex items-center justify-between text-[var(--accent-ink)]">
           <div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                opacity: 0.85,
-                letterSpacing: '.5px',
-              }}
-            >
+            <div className="text-[13px] font-extrabold opacity-85 tracking-[.5px]">
               WINGO · {app.MODE_LABEL[mode as keyof typeof app.MODE_LABEL]}
             </div>
-            <div style={{ fontSize: 22, fontWeight: 900, marginTop: 3 }}>
+            <div className="text-[22px] font-black mt-[3px]">
               Period {p.periodId}
             </div>
-            <div
-              style={{
-                fontSize: 11.5,
-                fontWeight: 700,
-                opacity: 0.75,
-                marginTop: 5,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-            >
+            <div className="text-[11.5px] font-bold opacity-75 mt-[5px] flex items-center gap-[5px]">
               {Icon.shield({ size: 13 })}
               {STRINGS.game.fairPlay}
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div
-              style={{ fontSize: 12, fontWeight: 800, opacity: 0.8, marginBottom: 5 }}
-            >
+          <div className="text-right">
+            <div className="text-xs font-extrabold opacity-80 mb-[5px]">
               {locked ? 'DRAWING…' : 'TIME REMAINING'}
             </div>
-            <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-end' }}>
+            <div className="flex gap-[5px] justify-end">
               {timerStr.split('').map((ch, i) =>
                 ch === ':' ? (
-                  <span key={i} style={{ fontSize: 34, fontWeight: 900 }}>
+                  <span key={i} className="text-[34px] font-black">
                     :
                   </span>
                 ) : (
@@ -168,14 +130,9 @@ function Board({
                     key={i}
                     style={{
                       background: 'rgba(0,0,0,.28)',
-                      color: '#fff',
-                      borderRadius: 8,
-                      padding: '5px 10px',
-                      fontSize: 32,
-                      fontWeight: 900,
-                      fontVariantNumeric: 'tabular-nums',
                       animation: locked ? 'pulse .8s infinite' : 'none',
                     }}
+                    className="text-white rounded-lg py-[5px] px-2.5 text-[32px] font-black tabular-nums"
                   >
                     {ch}
                   </span>
@@ -184,20 +141,11 @@ function Board({
             </div>
           </div>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '14px 26px',
-          }}
-        >
-          <span
-            style={{ fontSize: 11.5, color: 'var(--text-mute)', fontWeight: 700 }}
-          >
+        <div className="flex items-center gap-3 py-3.5 px-[26px]">
+          <span className="text-[11.5px] text-[var(--text-mute)] font-bold">
             LAST 10
           </span>
-          <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
+          <div className="flex gap-[9px] flex-wrap">
             {recent.map((r, i) => (
               <ResultBall key={i} num={r.num} size={30} />
             ))}
@@ -209,50 +157,28 @@ function Board({
       <Card pad={24} style={{ position: 'relative' }}>
         {locked && (
           <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 5,
-              borderRadius: 'var(--radius)',
-              background: 'color-mix(in srgb, var(--bg) 72%, transparent)',
-              backdropFilter: 'blur(2px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gap: 8,
-            }}
+            style={{ background: 'color-mix(in srgb, var(--bg) 72%, transparent)' }}
+            className="absolute inset-0 z-[5] rounded-[var(--radius)] backdrop-blur-[2px] flex items-center justify-center flex-col gap-2"
           >
-            <div style={{ color: 'var(--red)', animation: 'pulse 1s infinite' }}>
+            <div
+              style={{ animation: 'pulse 1s infinite' }}
+              className="text-red"
+            >
               {Icon.clock({ size: 34 })}
             </div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>
+            <div className="text-base font-extrabold text-text">
               Betting closed
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-mute)' }}>
+            <div className="text-[13px] text-[var(--text-mute)]">
               Drawing result for this round…
             </div>
           </div>
         )}
 
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--text-mute)',
-            marginBottom: 12,
-          }}
-        >
+        <div className="text-xs font-bold text-[var(--text-mute)] mb-3">
           PICK A COLOR
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3,1fr)',
-            gap: 14,
-            marginBottom: 22,
-          }}
-        >
+        <div className="grid grid-cols-[repeat(3,1fr)] gap-3.5 mb-[22px]">
           {(
             [
               ['green', 'Green', '2×', 'var(--green)', 'var(--glow-green)'],
@@ -264,20 +190,11 @@ function Board({
               key={c[0]}
               onClick={() => pick('color', c[0])}
               style={{
-                padding: '20px',
-                borderRadius: 'var(--radius-sm)',
-                border: isSel('color', c[0]) ? '2px solid #fff' : '2px solid transparent',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
                 background: c[3],
-                color: '#fff',
                 boxShadow: c[4],
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 3,
-                transition: 'transform .12s',
+                border: isSel('color', c[0]) ? '2px solid #fff' : '2px solid transparent',
               }}
+              className="py-5 rounded-[var(--radius-sm)] cursor-pointer text-white flex flex-col items-center gap-[3px] transition-transform duration-[120ms]"
               onMouseDown={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.transform = 'scale(.97)')
               }
@@ -288,49 +205,28 @@ function Board({
                 ((e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)')
               }
             >
-              <span style={{ fontSize: 19, fontWeight: 800 }}>{c[1]}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.85 }}>
+              <span className="text-[19px] font-extrabold">{c[1]}</span>
+              <span className="text-xs font-bold opacity-85">
                 Win {c[2]}
               </span>
             </button>
           ))}
         </div>
 
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--text-mute)',
-            marginBottom: 12,
-          }}
-        >
+        <div className="text-xs font-bold text-[var(--text-mute)] mb-3">
           PICK A NUMBER · Win 9×
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(10,1fr)',
-            gap: 10,
-            marginBottom: 22,
-          }}
-        >
+        <div className="grid grid-cols-5 app:grid-cols-[repeat(10,1fr)] gap-2.5 mb-[22px]">
           {Array.from({ length: 10 }).map((_, n) => (
             <button
               key={n}
               onClick={() => pick('number', n)}
               style={{
-                aspectRatio: '1',
-                borderRadius: '50%',
-                border: isSel('number', n) ? '3px solid #fff' : '3px solid transparent',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
                 background: numColorStyle(n),
-                color: '#fff',
-                fontSize: 20,
-                fontWeight: 800,
+                border: isSel('number', n) ? '3px solid #fff' : '3px solid transparent',
                 boxShadow: '0 4px 12px rgba(0,0,0,.35)',
-                transition: 'transform .12s',
               }}
+              className="aspect-square rounded-full cursor-pointer text-white text-xl font-extrabold transition-transform duration-[120ms]"
               onMouseDown={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.transform = 'scale(.9)')
               }
@@ -346,56 +242,29 @@ function Board({
           ))}
         </div>
 
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--text-mute)',
-            marginBottom: 12,
-          }}
-        >
+        <div className="text-xs font-bold text-[var(--text-mute)] mb-3">
           BIG OR SMALL
         </div>
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}
-        >
+        <div className="grid grid-cols-2 gap-3.5">
           {(
             [
-              [
-                'big',
-                'BIG',
-                '5 – 9',
-                'linear-gradient(135deg,#ff9a3d,#ff5a3d)',
-              ],
-              [
-                'small',
-                'SMALL',
-                '0 – 4',
-                'linear-gradient(135deg,#3da5ff,#7c5cff)',
-              ],
+              ['big', 'BIG', '5 – 9', 'linear-gradient(135deg,#ff9a3d,#ff5a3d)'],
+              ['small', 'SMALL', '0 – 4', 'linear-gradient(135deg,#3da5ff,#7c5cff)'],
             ] as const
           ).map((s) => (
             <button
               key={s[0]}
               onClick={() => pick('size', s[0])}
               style={{
-                padding: '16px',
-                borderRadius: 'var(--radius-sm)',
-                border: isSel('size', s[0]) ? '2px solid #fff' : '2px solid transparent',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
                 background: s[3],
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
+                border: isSel('size', s[0]) ? '2px solid #fff' : '2px solid transparent',
               }}
+              className="py-4 rounded-[var(--radius-sm)] cursor-pointer text-white flex items-center justify-center gap-2.5"
             >
-              <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '1px' }}>
+              <span className="text-lg font-black tracking-[1px]">
                 {s[1]}
               </span>
-              <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85 }}>
+              <span className="text-[13px] font-bold opacity-85">
                 {s[2]}
               </span>
             </button>
@@ -463,18 +332,11 @@ function BetSlip({
     <button
       key={v}
       onClick={() => set(v)}
-      style={{
-        flex: 1,
-        padding: '9px 0',
-        borderRadius: 9,
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        fontSize: 13,
-        fontWeight: 800,
-        background: cur === v ? 'var(--accent)' : 'var(--surface-2)',
-        color: cur === v ? 'var(--accent-ink)' : 'var(--text-dim)',
-        border: '1px solid ' + (cur === v ? 'transparent' : 'var(--border)'),
-      }}
+      className={`flex-1 py-[9px] rounded-[9px] cursor-pointer text-[13px] font-extrabold border ${
+        cur === v
+          ? 'bg-[var(--accent)] text-[var(--accent-ink)] border-transparent'
+          : 'bg-[var(--surface-2)] text-[var(--text-dim)] border-[var(--border)]'
+      }`}
     >
       {fmt(v)}
     </button>
@@ -482,156 +344,75 @@ function BetSlip({
 
   return (
     <Card pad={18} style={{ marginBottom: 16 }}>
-      <div
-        style={{
-          fontSize: 14,
-          fontWeight: 800,
-          color: 'var(--text)',
-          marginBottom: 14,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
+      <div className="text-sm font-extrabold text-text mb-3.5 flex items-center gap-2">
         {Icon.target({ size: 18, color: 'var(--accent)' })}
         Bet slip
       </div>
 
       {!sel ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '26px 10px',
-            color: 'var(--text-mute)',
-          }}
-        >
-          <div
-            style={{
-              opacity: 0.5,
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: 10,
-            }}
-          >
+        <div className="text-center py-[26px] px-2.5 text-[var(--text-mute)]">
+          <div className="opacity-50 flex justify-center mb-2.5">
             {Icon.target({ size: 32 })}
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>
+          <div className="text-[13px] font-semibold">
             Tap a color, number or size
           </div>
-          <div style={{ fontSize: 12, marginTop: 2 }}>to build your bet</div>
+          <div className="text-xs mt-0.5">to build your bet</div>
         </div>
       ) : (
         <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 11,
-              padding: '12px',
-              background: 'var(--surface-2)',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: 14,
-            }}
-          >
+          <div className="flex items-center gap-[11px] p-3 bg-[var(--surface-2)] rounded-[var(--radius-sm)] mb-3.5">
             <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: swatch,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 800,
-              }}
+              style={{ background: swatch }}
+              className="size-10 rounded-full flex items-center justify-center text-white font-extrabold"
             >
               {sel.kind === 'number' ? sel.pick : ''}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>
+            <div className="flex-1">
+              <div className="text-sm font-extrabold text-text">
                 {label}
               </div>
-              <div
-                style={{
-                  fontSize: 11.5,
-                  color: 'var(--text-mute)',
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-[11.5px] text-[var(--text-mute)] font-semibold">
                 Win {payMult}×
               </div>
             </div>
             <button
               onClick={() => setSel(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-mute)',
-                cursor: 'pointer',
-              }}
+              className="bg-transparent border-0 text-[var(--text-mute)] cursor-pointer"
             >
               {Icon.x({ size: 18 })}
             </button>
           </div>
 
-          <div
-            style={{
-              fontSize: 11,
-              color: 'var(--text-mute)',
-              fontWeight: 700,
-              marginBottom: 7,
-            }}
-          >
+          <div className="text-[11px] text-[var(--text-mute)] font-bold mb-[7px]">
             AMOUNT
           </div>
-          <div style={{ display: 'flex', gap: 7, marginBottom: 12 }}>
+          <div className="flex gap-[7px] mb-3">
             {[1, 10, 100, 1000].map((v) => chip(v, setAmount, amount, (x) => String(x)))}
           </div>
 
-          <div
-            style={{
-              fontSize: 11,
-              color: 'var(--text-mute)',
-              fontWeight: 700,
-              marginBottom: 7,
-            }}
-          >
+          <div className="text-[11px] text-[var(--text-mute)] font-bold mb-[7px]">
             MULTIPLIER
           </div>
-          <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}>
+          <div className="flex gap-[7px] mb-4">
             {[1, 5, 10, 20, 50].map((v) =>
               chip(v, setMult, mult, (x) => 'x' + x),
             )}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 13,
-              marginBottom: 6,
-            }}
-          >
-            <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>
+          <div className="flex justify-between text-[13px] mb-1.5">
+            <span className="text-[var(--text-dim)] font-semibold">
               Total stake
             </span>
-            <span style={{ color: 'var(--text)', fontWeight: 800 }}>
+            <span className="text-text font-extrabold">
               {formatMoney(toMinor(stake))} USDT
             </span>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 13,
-              marginBottom: 16,
-            }}
-          >
-            <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>
+          <div className="flex justify-between text-[13px] mb-4">
+            <span className="text-[var(--text-dim)] font-semibold">
               Potential win
             </span>
-            <span style={{ color: 'var(--green)', fontWeight: 800 }}>
+            <span className="text-green font-extrabold">
               {formatMoney(toMinor(win))} USDT
             </span>
           </div>
@@ -694,18 +475,11 @@ function MyBets({
 
   return (
     <Card pad={18} style={{ marginBottom: 16 }}>
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 800,
-          color: 'var(--text)',
-          marginBottom: 12,
-        }}
-      >
+      <div className="text-[13px] font-extrabold text-text mb-3">
         Your bets this round
       </div>
       {mine.length ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+        <div className="flex flex-col gap-[9px]">
           {mine.map((b) => {
             const pickStr = String(b.pick);
             const lbl =
@@ -717,35 +491,13 @@ function MyBets({
             return (
               <div
                 key={b.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
+                className="flex items-center justify-between"
               >
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: 'var(--text)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 7,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: 4,
-                      background: 'var(--accent)',
-                    }}
-                  />
+                <span className="text-[13px] font-bold text-text flex items-center gap-[7px]">
+                  <span className="size-[7px] rounded-[4px] bg-[var(--accent)]" />
                   {lbl}
                 </span>
-                <span
-                  style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-dim)' }}
-                >
+                <span className="text-[13px] font-bold text-[var(--text-dim)]">
                   {formatMoney(b.stake)} USDT
                 </span>
               </div>
@@ -753,14 +505,7 @@ function MyBets({
           })}
         </div>
       ) : (
-        <div
-          style={{
-            fontSize: 12.5,
-            color: 'var(--text-mute)',
-            textAlign: 'center',
-            padding: '12px 0',
-          }}
-        >
+        <div className="text-[12.5px] text-[var(--text-mute)] text-center py-3">
           No bets placed yet
         </div>
       )}
@@ -797,17 +542,10 @@ function Records({
 
   return (
     <Card pad={18}>
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 800,
-          color: 'var(--text)',
-          marginBottom: 12,
-        }}
-      >
+      <div className="text-[13px] font-extrabold text-text mb-3">
         Number trend
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 56 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 56 }}>
         <path
           d={path}
           fill="none"
@@ -828,48 +566,21 @@ function Records({
           );
         })}
       </svg>
-      <div
-        style={{
-          marginTop: 14,
-          borderTop: '1px solid var(--border)',
-          paddingTop: 12,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: 'var(--text-mute)',
-            marginBottom: 10,
-          }}
-        >
+      <div className="mt-3.5 border-t border-[var(--border)] pt-3">
+        <div className="text-[11px] font-bold text-[var(--text-mute)] mb-2.5">
           RECENT DRAWS
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="flex flex-col gap-2">
           {data.slice(0, 5).map((r, i) => (
             <div
               key={i}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}
+              className="flex items-center gap-2.5 text-xs"
             >
-              <span
-                style={{
-                  color: 'var(--text-mute)',
-                  fontWeight: 600,
-                  flex: 1,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
+              <span className="text-[var(--text-mute)] font-semibold flex-1 tabular-nums">
                 …{String(r.periodId).slice(-5)}
               </span>
               <ResultBall num={r.num} size={24} />
-              <span
-                style={{
-                  width: 48,
-                  textAlign: 'right',
-                  color: 'var(--text-dim)',
-                  fontWeight: 700,
-                }}
-              >
+              <span className="w-12 text-right text-[var(--text-dim)] font-bold">
                 {r.big ? 'Big' : 'Small'}
               </span>
             </div>
@@ -894,16 +605,9 @@ export function Game() {
   }, [mode]);
 
   return (
-    <div style={{ padding: '24px 28px 40px', maxWidth: 1180, margin: '0 auto' }}>
+    <div className="pt-6 px-4 app:px-7 pb-10 mx-auto max-w-[1180px]">
       <ModeTabs mode={mode} setMode={setMode} app={app} />
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0,1fr) 360px',
-          gap: 20,
-          alignItems: 'start',
-        }}
-      >
+      <div className="grid grid-cols-1 app:grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
         <Board
           mode={mode}
           app={app}

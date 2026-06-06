@@ -16,7 +16,7 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
@@ -43,46 +43,17 @@ export function Profile() {
         pad={24}
         style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 16 }}
       >
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 18,
-            background: 'var(--header-grad)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 900,
-            color: 'var(--accent-ink)',
-            fontSize: 26,
-          }}
-        >
+        <div className="size-16 rounded-[18px] bg-[var(--header-grad)] flex items-center justify-center font-black text-[var(--accent-ink)] text-[26px]">
           {initial}
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>
+        <div className="flex-1">
+          <div className="text-xl font-extrabold text-text">
             {handle}
           </div>
-          <div
-            style={{ fontSize: 13, color: 'var(--text-mute)', fontWeight: 600 }}
-          >
+          <div className="text-[13px] text-[var(--text-mute)] font-semibold">
             UID {uid} · joined {joined}
           </div>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              marginTop: 8,
-              fontSize: 11.5,
-              fontWeight: 800,
-              color: 'var(--gold)',
-              background: 'var(--glass)',
-              border: '1px solid var(--glass-brd)',
-              padding: '4px 11px',
-              borderRadius: 999,
-            }}
-          >
+          <span className="inline-flex items-center gap-[5px] mt-2 text-[11.5px] font-extrabold text-[var(--gold)] bg-[var(--glass)] border border-[var(--glass-brd)] py-1 px-[11px] rounded-full">
             {Icon.diamond({ size: 13 })}
             VIP {app.vip.level} {app.vip.name}
           </span>
@@ -102,48 +73,20 @@ export function Profile() {
             onClick={() =>
               app.pushToast(r[0], 'info')
             }
+            className="flex items-center gap-3.5 w-full py-[15px] px-3.5 bg-transparent border-0 cursor-pointer text-left"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              width: '100%',
-              padding: '15px 14px',
-              background: 'none',
-              border: 'none',
               borderBottom:
                 i < rows.length - 1 ? '1px solid var(--border)' : 'none',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              textAlign: 'left',
             }}
           >
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 11,
-                background: 'var(--surface-2)',
-                color: 'var(--accent-2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="size-[38px] rounded-[11px] bg-[var(--surface-2)] text-[var(--accent-2)] flex items-center justify-center">
               {Icon[r[2] as keyof typeof Icon]?.({ size: 19 })}
             </div>
-            <div style={{ flex: 1 }}>
-              <div
-                style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}
-              >
+            <div className="flex-1">
+              <div className="text-[14.5px] font-bold text-text">
                 {r[0]}
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: 'var(--text-mute)',
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-xs text-[var(--text-mute)] font-semibold">
                 {r[1]}
               </div>
             </div>

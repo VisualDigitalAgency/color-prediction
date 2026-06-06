@@ -60,11 +60,11 @@ const WINNERS: [string, string, number][] = [
 ];
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: 1180, margin: '0 auto' }}>{children}</div>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto max-w-[1180px]">{children}</div>
 );
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', margin: '4px 2px 14px' }}>{children}</div>
+  <div className="text-base font-extrabold text-text mt-1 mx-0.5 mb-3.5">{children}</div>
 );
 
 export function Lobby() {
@@ -94,32 +94,28 @@ export function Lobby() {
   return (
     <Wrap>
       {/* promo + balance */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 18, marginBottom: 18 }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-[18px] mb-[18px]">
         <div
+          className="rounded-[var(--radius)] py-[30px] px-8 text-white relative overflow-hidden"
           style={{
-            borderRadius: 'var(--radius)',
-            padding: '30px 32px',
             background: 'linear-gradient(120deg,#7c5cff,#1fe0ff)',
-            color: '#fff',
-            position: 'relative',
-            overflow: 'hidden',
             boxShadow: 'var(--card-shadow)',
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 800, opacity: 0.85, letterSpacing: '.5px' }}>{L.welcomeOffer}</div>
-          <div style={{ fontSize: 34, fontWeight: 900, margin: '6px 0 4px' }}>{L.welcomeHeadline}</div>
-          <div style={{ fontSize: 15, fontWeight: 600, opacity: 0.9, marginBottom: 20 }}>{L.welcomeSub}</div>
+          <div className="text-[13px] font-extrabold opacity-85 tracking-[.5px]">{L.welcomeOffer}</div>
+          <div className="text-[34px] font-black mt-1.5 mb-1">{L.welcomeHeadline}</div>
+          <div className="text-[15px] font-semibold opacity-90 mb-5">{L.welcomeSub}</div>
           <Button variant="glass" onClick={() => router.push(ROUTES.deposit)}>
             {L.claimBonus}
           </Button>
         </div>
         <Card glow pad={22}>
-          <div style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 700 }}>{L.totalBalance}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, margin: '4px 0 16px' }}>
+          <div className="text-xs text-[var(--text-mute)] font-bold">{L.totalBalance}</div>
+          <div className="flex items-baseline gap-[7px] mt-1 mb-4">
             <CountUp value={fromMinor(app.totalBalance())} style={{ fontSize: 34, fontWeight: 900, color: 'var(--text)' }} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-dim)' }}>{STRINGS.wallet.currency}</span>
+            <span className="text-sm font-bold text-[var(--text-dim)]">{STRINGS.wallet.currency}</span>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="flex gap-2.5">
             <Button full icon="plus" onClick={() => router.push(ROUTES.deposit)}>
               {STRINGS.wallet.deposit}
             </Button>
@@ -131,99 +127,89 @@ export function Lobby() {
       </div>
 
       {/* wallet stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 26 }}>
+      <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-3.5 mb-[26px]">
         {wallets.map((w, i) => (
           <Card key={i} pad={18}>
-            <div style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 600, marginBottom: 6 }}>{w[0]}</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: w[2] }}>{formatMoney(w[1])}</div>
+            <div className="text-xs text-[var(--text-mute)] font-semibold mb-1.5">{w[0]}</div>
+            <div className="text-2xl font-black" style={{ color: w[2] }}>{formatMoney(w[1])}</div>
           </Card>
         ))}
       </div>
 
       {/* games */}
       <H2>{L.games}</H2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
+      <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-4 mb-7">
         {GAMES.map((g) => (
           <div
             key={g.key}
             onClick={() => router.push(ROUTES.game)}
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: 20,
-              cursor: 'pointer',
-              position: 'relative',
-              boxShadow: 'var(--card-shadow)',
-              transition: 'transform .15s',
-            }}
+            className="bg-surface border border-[var(--border)] rounded-[var(--radius)] p-5 cursor-pointer relative shadow-[var(--card-shadow)] transition-transform duration-150"
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-4px)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
           >
             {g.live && (
-              <span style={{ position: 'absolute', top: 16, right: 16, fontSize: 9, fontWeight: 800, color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 6, height: 6, borderRadius: 4, background: 'var(--green)', boxShadow: 'var(--glow-green)' }} />
+              <span className="absolute top-4 right-4 text-[9px] font-extrabold text-green flex items-center gap-1">
+                <span className="size-1.5 rounded-[4px] bg-green shadow-[var(--glow-green)]" />
                 {L.live}
               </span>
             )}
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: g.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <div
+              className="size-14 rounded-2xl flex items-center justify-center mb-3.5"
+              style={{ background: g.grad }}
+            >
               {Icon[g.icon]({ size: 30, color: '#fff' })}
             </div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{g.name}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-mute)', fontWeight: 600, marginTop: 2 }}>{g.tag}</div>
+            <div className="text-[17px] font-extrabold text-text">{g.name}</div>
+            <div className="text-[12.5px] text-[var(--text-mute)] font-semibold mt-0.5">{g.tag}</div>
           </div>
         ))}
       </div>
 
       {/* winners + recent */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+      <div className="grid grid-cols-2 gap-[18px]">
         <Card pad={20}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div className="text-sm font-extrabold text-text mb-3.5 flex items-center gap-[7px]">
             {Icon.trophy({ size: 17, color: 'var(--gold)' })}
             {L.liveWinners}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {WINNERS.map((w, i) => {
               const fresh = i === wi % WINNERS.length;
               return (
                 <div
                   key={i}
+                  className="flex items-center gap-[11px] py-2 px-2.5 rounded-[10px]"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 11,
-                    padding: '8px 10px',
-                    borderRadius: 10,
                     background: fresh ? 'color-mix(in srgb,var(--green) 10%,transparent)' : 'transparent',
                     transition: 'background .4s',
                   }}
                 >
-                  <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: 'var(--text-dim)' }}>
+                  <div className="size-[30px] rounded-[9px] bg-[var(--surface-2)] flex items-center justify-center text-xs font-extrabold text-[var(--text-dim)]">
                     {w[0][0].toUpperCase()}
                   </div>
-                  <span style={{ flex: 1, fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>
+                  <span className="flex-1 text-[13px] text-text font-semibold">
                     {w[0]}
-                    <span style={{ color: 'var(--text-mute)', marginLeft: 6, fontSize: 11.5 }}>{w[1]}</span>
+                    <span className="text-[var(--text-mute)] ml-1.5 text-[11.5px]">{w[1]}</span>
                   </span>
-                  <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--green)' }}>{'+' + formatMoney(toMinor(w[2]), { decimals: 0 })}</span>
+                  <span className="text-[13.5px] font-extrabold text-green">{'+' + formatMoney(toMinor(w[2]), { decimals: 0 })}</span>
                 </div>
               );
             })}
           </div>
         </Card>
         <Card pad={20}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{L.latest}</div>
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="text-sm font-extrabold text-text">{L.latest}</div>
             <Button size="sm" variant="glass" onClick={() => router.push(ROUTES.game)}>
               {L.playNow}
             </Button>
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+          <div className="flex gap-2.5 flex-wrap mb-4">
             {recent.map((r, i) => (
               <ResultBall key={i} num={r.num} size={38} />
             ))}
           </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>{STRINGS.game.lobbyRoundNote}</div>
+          <div className="text-[12.5px] text-[var(--text-mute)] leading-[1.6]">{STRINGS.game.lobbyRoundNote}</div>
         </Card>
       </div>
     </Wrap>

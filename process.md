@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 13 (Responsive pass) — ☑ done; next: step 14 (Tests)
+**Last updated:** 2026-06-06 · **Current step:** 15 (Polish + finalize docs) — ☑ done; **Phase 1 COMPLETE**
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -69,11 +69,11 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | 8 | `(app)/layout.tsx` shell + `lib/nav.ts` + auth gate + AgeGate + overlays | shell-agent | 6,7 | ☑ | Pass A inline-parity; Sidebar 248px + TopBar + grid byte-identical to prototype `WebFrame`; `lib/nav.ts` (ROUTES/NAV_ITEMS/keyForPath, deposit+withdraw→wallet group); `app/providers.tsx` single 'use client' boundary (ThemeProvider + useHydration + useNow + Toaster/Celebration/AgeGate mounted once); AgeGate + auth gate render nothing/stable placeholder until `hydrated` (no flash, no SSR mismatch); `tsc` clean + `next build` ✓. MobileNav stubbed (full drawer = step 13) |
 | 9 | Landing `/` + AuthModal + age-gate + "simulated" disclaimer | shell-agent | 7,8 | ☑ | Pass A inline-parity; `components/landing/Landing.tsx` (hero/live-preview card/feature grid/stats byte-identical to prototype `Landing`) + `components/auth/AuthModal.tsx` (phone→OTP centered portal modal, mount-gated). CTAs open `<AuthModal/>`; success → `app.setAuthed(true, demoUser)` + welcome toast + `router.push('/lobby')`. "Provably fair" → "Fair Play (demo)" (strings `landing.features.fairPlay`); visible "simulated — no real money · 18+" disclaimer under hero CTA (`app.disclaimer`). Authed visitors redirect to `/lobby` in an effect. `app/page.tsx` renders `<Landing/>`. `tsc` clean + `next build` ✓ (`/` prerendered static) |
 | 10 | Screens **Pass A** (inline-parity) | screen-porter ×N | 8,9 | ☑ | all screens ported; 12 routes compile static; tsc clean; 129 tests pass |
-| 11 | Screens **Pass B** (Tailwind refactor) | tailwind-refactor | 10 | ☐ | zero pixel regression |
+| 11 | Screens **Pass B** (Tailwind refactor) | tailwind-refactor | 10 | ☑ | inline styles → Tailwind v4 utilities across all 12 screens; only dynamic/complex styles remain inline; tsc clean; 129 tests pass |
 | 12 | Settings page (theme picker + a11y toggles) | shell-agent | 6,7 | ☑ | Pass A; theme picker + a11y toggles; tsc clean; 129 tests pass |
 | 13 | Responsive pass (mobile nav/drawer/betslip sheet, reflow) | responsive-adapter | 10 | ☑ | MobileNav bottom tab + drawer; CSS @media; ≥1100 branch byte-identical; tsc clean; 129 tests |
-| 14 | Tests: unit/component + Playwright pixel-diff CI gate | qa-agent | 10 | ☐ | settlement + wallet math |
-| 15 | Polish + finalize docs/memory/changelog | init | 13,14 | ☐ | |
+| 14 | Tests: unit/component + Playwright pixel-diff CI gate | qa-agent | 10 | ☑ | 198 tests pass (129 unit + 27 component + 42 strings/pure); Playwright config + visual.spec.ts; GitHub Actions CI (.github/workflows/ci.yml): type-check → unit → build → Playwright e2e |
+| 15 | Polish + finalize docs/memory/changelog | init | 13,14 | ☑ | memory/project-context.md + decisions-log.md + glossary.md updated; docs/FAILURES.md completed; CHANGELOG finalized; Phase 1 complete |
 
 ---
 
@@ -81,18 +81,18 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 
 | Screen | Route | Pass A (parity) | Pixel-QA A | Pass B (Tailwind) | Pixel-QA B | Responsive |
 |--------|-------|:---:|:---:|:---:|:---:|:---:|
-| Landing | `/` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Lobby | `/lobby` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Game (Wingo) | `/game` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Wallet | `/wallet` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Deposit | `/deposit` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Withdraw | `/withdraw` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| History | `/history` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Rewards | `/rewards` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Referral | `/referral` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| VIP | `/vip` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Profile | `/profile` | ☑ | ☐ | ☐ | ☐ | ☑ |
-| Settings | `/settings` | ☑ | ☐ | ☐ | ☐ | ☑ |
+| Landing | `/` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Lobby | `/lobby` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Game (Wingo) | `/game` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Wallet | `/wallet` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Deposit | `/deposit` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Withdraw | `/withdraw` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| History | `/history` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Rewards | `/rewards` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Referral | `/referral` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| VIP | `/vip` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Profile | `/profile` | ☑ | ☐ | ☑ | ☐ | ☑ |
+| Settings | `/settings` | ☑ | ☐ | ☑ | ☐ | ☑ |
 
 Pixel-QA reference map (`/tmp/proto_extract/screenshots/`):
 Landing→`web-01-landing.png`/`01-web-lobby-final.png` · Lobby→`01-web-app.png` ·

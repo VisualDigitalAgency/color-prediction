@@ -54,38 +54,15 @@ export function SpinWheel() {
   };
 
   return (
-    <div
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        padding: 26,
-        boxShadow: 'var(--card-shadow)',
-        textAlign: 'center',
-      }}
-    >
-      <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>
+    <div className="bg-surface border border-[var(--border)] rounded-[var(--radius)] p-[26px] shadow-[var(--card-shadow)] text-center">
+      <div className="text-[17px] font-extrabold text-text">
         Lucky Spin
       </div>
-      <div
-        style={{
-          fontSize: 13,
-          color: 'var(--text-mute)',
-          fontWeight: 600,
-          marginBottom: 20,
-        }}
-      >
+      <div className="text-[13px] text-[var(--text-mute)] font-semibold mb-5">
         {freeSpins} free spins left today
       </div>
 
-      <div
-        style={{
-          position: 'relative',
-          width: 260,
-          height: 260,
-          margin: '0 auto 22px',
-        }}
-      >
+      <div className="relative size-[260px] mx-auto mb-[22px]">
         {/* pointer */}
         <div
           style={{
@@ -104,16 +81,13 @@ export function SpinWheel() {
         />
         {/* wheel */}
         <div
+          className="size-[260px] rounded-full relative"
           style={{
-            width: 260,
-            height: 260,
-            borderRadius: '50%',
             background: `conic-gradient(${grad})`,
             transform: `rotate(${rot}deg)`,
             transition: spinning ? 'transform 4.1s cubic-bezier(.15,.85,.25,1)' : 'none',
             boxShadow:
               '0 0 0 7px var(--surface-2), 0 0 0 9px var(--accent), var(--glow-accent)',
-            position: 'relative',
           }}
         >
           {PRIZES_VISUAL.map((p, i) => (
@@ -136,24 +110,7 @@ export function SpinWheel() {
           ))}
         </div>
         {/* center hub */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%,-50%)',
-            width: 52,
-            height: 52,
-            borderRadius: '50%',
-            background: 'var(--header-grad)',
-            border: '3px solid var(--surface)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2,
-            color: 'var(--accent-ink)',
-          }}
-        >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[52px] rounded-full bg-[var(--header-grad)] border-[3px] border-surface flex items-center justify-center z-[2] text-[var(--accent-ink)]">
           {Icon.bolt({ size: 26 })}
         </div>
       </div>

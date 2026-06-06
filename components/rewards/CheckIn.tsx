@@ -21,50 +21,24 @@ export function CheckIn() {
 
   return (
     <Card pad={22}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-      >
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>
+          <div className="text-base font-extrabold text-text">
             Daily check-in
           </div>
-          <div
-            style={{
-              fontSize: 12.5,
-              color: 'var(--text-mute)',
-              fontWeight: 600,
-            }}
-          >
+          <div className="text-[12.5px] text-[var(--text-mute)] font-semibold">
             Day {claimed + 1} of {rewards.length} · keep your streak
           </div>
         </div>
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 800,
-            color: 'var(--gold)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-          }}
-        >
+        <span className="text-xs font-extrabold text-[var(--gold)] flex items-center gap-[5px]">
           {Icon.fire({ size: 15 })}
           {claimed} day streak
         </span>
       </div>
 
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${rewards.length},1fr)`,
-          gap: 9,
-          marginBottom: 16,
-        }}
+        className="grid gap-[9px] mb-4"
+        style={{ gridTemplateColumns: `repeat(${rewards.length},1fr)` }}
       >
         {rewards.map((reward, i) => {
           const done = i < claimed;
@@ -72,10 +46,8 @@ export function CheckIn() {
           return (
             <div
               key={i}
+              className="rounded-xl py-3.5 px-1 text-center"
               style={{
-                borderRadius: 12,
-                padding: '14px 4px',
-                textAlign: 'center',
                 background: done
                   ? 'color-mix(in srgb,var(--green) 16%,transparent)'
                   : today
@@ -86,12 +58,8 @@ export function CheckIn() {
               }}
             >
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginBottom: 4,
-                  color: today ? 'var(--accent-ink)' : 'var(--gold)',
-                }}
+                className="flex justify-center mb-1"
+                style={{ color: today ? 'var(--accent-ink)' : 'var(--gold)' }}
               >
                 {done
                   ? Icon.check({ size: 16, color: 'var(--green)' })
