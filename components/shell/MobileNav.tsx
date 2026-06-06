@@ -9,19 +9,34 @@
  *
  * MUST NOT affect the ≥1100 px desktop branch.
  * The `.app-mobile-nav` class is hidden by default in globals.css and revealed
- * only at <1100px via a media query (no inline display:none needed).
+ * only at <1100px via a media query.
+ *
+ * Z-index stack (ascending):
+ *   30 — reserved
+ *   40 — backdrop overlay
+ *   41 — slide-out drawer panel
+ *   42 — bottom tab bar (above overlay so tabs are always tappable)
  */
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@/components/icons/Icon';
+import { NavButton } from '@/components/shell/NavButton';
+import { NavLogout } from '@/components/shell/NavLogout';
+import { VipMiniCard } from '@/components/shell/VipMiniCard';
 import { NAV_ITEMS, ROUTES, keyForPath } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import STRINGS from '@/lib/strings';
 
 // 4 primary tabs shown in the fixed bottom bar.
 const BOTTOM_TABS = NAV_ITEMS.filter((n) =>
-  ['home', 'game', 'wallet', 'rewards'].includes(n.key),
+  (['home', 'game', 'wallet', 'rewards'] as string[]).includes(n.key),
 );
+
+// Profile + Settings are not in NAV_ITEMS but appear in the drawer.
+const EXTRA_NAV = [
+  { key: 'profile' as const, route: ROUTES.profile, label: STRINGS.titles.profile, icon: 'user' as const },
+  { key: 'settings' as const, route: ROUTES.settings, label: STRINGS.titles.settings, icon: 'settings' as const },
+];
 
 interface Props {
   drawerOpen: boolean;
@@ -43,6 +58,8 @@ export function MobileNav({ drawerOpen, onOpen, onClose }: Props) {
   return (
     <>
       {/* ── Bottom tab bar ──────────────────────────────────── */}
+      {/* zIndex:42 keeps the tab bar above the backdrop overlay (40) so tabs  */}
+      {/* remain tappable even when the drawer is open.                        */}
       <nav
         className="app-mobile-nav"
         style={{
@@ -50,7 +67,7 @@ export function MobileNav({ drawerOpen, onOpen, onClose }: Props) {
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 30,
+          zIndex: 42,
           background: 'var(--surface)',
           borderTop: '1px solid var(--border)',
           flexDirection: 'row',
@@ -107,7 +124,7 @@ export function MobileNav({ drawerOpen, onOpen, onClose }: Props) {
         </button>
       </nav>
 
-      {/* ── Drawer overlay ─────────────────────────────────── */}
+      {/* ── Drawer backdrop ─────────────────────────────────── */}
       {drawerOpen && (
         <div
           onClick={onClose}
@@ -162,11 +179,9 @@ export function MobileNav({ drawerOpen, onOpen, onClose }: Props) {
               >
                 {Icon.target({ size: 22, color: 'var(--accent-ink)' })}
               </div>
-              <div>
-                <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>
-                  {STRINGS.app.namePrefix}
-                  <span style={{ color: 'var(--accent)' }}>{STRINGS.app.nameSuffix}</span>
-                </div>
+              <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>
+                {STRINGS.app.namePrefix}
+                <span style={{ color: 'var(--accent)' }}>{STRINGS.app.nameSuffix}</span>
               </div>
             </div>
             <button
@@ -191,139 +206,44 @@ export function MobileNav({ drawerOpen, onOpen, onClose }: Props) {
 
           {/* Full nav list */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-            {NAV_ITEMS.map((n) => {
-              const on = activeKey === n.key;
-              return (
-                <button
-                  key={n.key}
-                  onClick={() => go(n.route)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '11px 13px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    textAlign: 'left',
-                    background: on ? 'color-mix(in srgb, var(--accent) 16%, transparent)' : 'transparent',
-                    color: on ? 'var(--accent)' : 'var(--text-dim)',
-                    position: 'relative',
-                  }}
-                >
-                  {on && (
-                    <span
-                      style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: 'var(--accent)' }}
-                    />
-                  )}
-                  {Icon[n.icon]({ size: 20 })}
-                  <span style={{ flex: 1 }}>{n.label}</span>
-                </button>
-              );
-            })}
-            {/* Profile & Settings links */}
-            {([
-              { key: 'profile', route: ROUTES.profile, label: STRINGS.titles.profile, icon: 'user' },
-              { key: 'settings', route: ROUTES.settings, label: STRINGS.titles.settings, icon: 'settings' },
-            ] as const).map((n) => {
-              const on = activeKey === n.key;
-              return (
-                <button
-                  key={n.key}
-                  onClick={() => go(n.route)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '11px 13px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    textAlign: 'left',
-                    background: on ? 'color-mix(in srgb, var(--accent) 16%, transparent)' : 'transparent',
-                    color: on ? 'var(--accent)' : 'var(--text-dim)',
-                    position: 'relative',
-                  }}
-                >
-                  {on && (
-                    <span
-                      style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 3, background: 'var(--accent)' }}
-                    />
-                  )}
-                  {Icon[n.icon]({ size: 20 })}
-                  <span>{n.label}</span>
-                </button>
-              );
-            })}
+            {NAV_ITEMS.map((n) => (
+              <NavButton
+                key={n.key}
+                label={n.label}
+                icon={n.icon}
+                active={activeKey === n.key}
+                onClick={() => go(n.route)}
+              />
+            ))}
+            {EXTRA_NAV.map((n) => (
+              <NavButton
+                key={n.key}
+                label={n.label}
+                icon={n.icon}
+                active={activeKey === n.key}
+                onClick={() => go(n.route)}
+              />
+            ))}
           </nav>
 
-          {/* VIP mini card */}
-          <div
-            onClick={() => go(ROUTES.vip)}
-            style={{
-              background: 'linear-gradient(135deg, color-mix(in srgb,var(--violet) 22%,var(--surface-2)), var(--surface-2))',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: 14,
-              cursor: 'pointer',
-              margin: '12px 0',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: 'var(--header-grad)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--accent-ink)',
-                }}
-              >
-                {Icon.diamond({ size: 15 })}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>
-                {'VIP ' + app.vip.level + ' · ' + app.vip.name}
-              </div>
-            </div>
-            <div style={{ height: 5, borderRadius: 3, background: 'var(--surface-3)', overflow: 'hidden' }}>
-              <div
-                style={{ width: Math.round((app.vip.points / app.vip.next) * 100) + '%', height: '100%', background: 'var(--header-grad)' }}
-              />
-            </div>
+          {/* VIP card */}
+          <div style={{ margin: '12px 0' }}>
+            <VipMiniCard
+              level={app.vip.level}
+              name={app.vip.name}
+              points={app.vip.points}
+              next={app.vip.next}
+              onClick={() => go(ROUTES.vip)}
+            />
           </div>
 
           {/* Logout */}
-          <button
-            onClick={() => {
+          <NavLogout
+            onLogout={() => {
               app.setAuthed(false);
               router.replace('/');
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 13px',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-mute)',
-              fontFamily: 'inherit',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {Icon.chevL({ size: 16 })}
-            {STRINGS.nav.logOut}
-          </button>
+          />
         </aside>
       )}
     </>

@@ -15,26 +15,7 @@ import { THEMES } from '@/lib/theme/themes';
 import STRINGS from '@/lib/strings';
 import type { ThemeId } from '@/types';
 
-// Lifted from THEMES to apply as per-card backgrounds (not CSS vars).
-const PREVIEW_SCREEN: Record<ThemeId, string> = {
-  neon: 'radial-gradient(120% 80% at 50% -10%, #16123a 0%, #0a0a17 42%, #06060d 100%)',
-  fintech: 'linear-gradient(180deg, #0e1117 0%, #0a0c11 100%)',
-  cyber: 'radial-gradient(110% 75% at 80% -5%, #1a1150 0%, #0a0a24 45%, #04030f 100%)',
-};
-
-const PREVIEW_ACCENT: Record<ThemeId, string> = {
-  neon: '#15e08a',
-  fintech: '#e3b964',
-  cyber: '#8b5cff',
-};
-
-// [accent, green, red, violet] swatches for the mini palette row.
-const PREVIEW_SWATCHES: Record<ThemeId, [string, string, string, string]> = {
-  neon: ['#15e08a', '#15e08a', '#ff3460', '#b14bff'],
-  fintech: ['#e3b964', '#2fce97', '#ef6a72', '#8e7cf2'],
-  cyber: ['#8b5cff', '#1fffb0', '#ff4d7d', '#8b5cff'],
-};
-
+// Ordered list of theme IDs for the picker grid.
 const THEME_IDS: ThemeId[] = ['neon', 'fintech', 'cyber'];
 
 // ── Small layout helpers ────────────────────────────────────────────────────
@@ -174,8 +155,14 @@ interface ThemeCardProps {
 
 function ThemeCard({ id, active, onClick }: ThemeCardProps) {
   const theme = THEMES[id];
-  const accent = PREVIEW_ACCENT[id];
-  const swatches = PREVIEW_SWATCHES[id];
+  // Derive all preview values from the canonical theme object — single source of truth.
+  const accent = theme.vars['--accent'];
+  const swatches = [
+    theme.vars['--accent'],
+    theme.vars['--green'],
+    theme.vars['--red'],
+    theme.vars['--violet'],
+  ] as const;
 
   return (
     <button
@@ -183,7 +170,7 @@ function ThemeCard({ id, active, onClick }: ThemeCardProps) {
       aria-pressed={active}
       aria-label={`${theme.label} theme`}
       style={{
-        background: PREVIEW_SCREEN[id],
+        background: theme.screen,
         border: `2px solid ${active ? accent : 'transparent'}`,
         borderRadius: 'var(--radius)',
         padding: '16px 14px 14px',
@@ -201,18 +188,13 @@ function ThemeCard({ id, active, onClick }: ThemeCardProps) {
         {swatches.map((color, i) => (
           <div
             key={i}
-            style={{
-              width: 14,
-              height: 14,
-              borderRadius: 7,
-              background: color,
-              opacity: i === 3 && id !== 'cyber' ? 0.7 : 1,
-            }}
+            style={{ width: 14, height: 14, borderRadius: 7, background: color }}
           />
         ))}
       </div>
 
-      <div style={{ fontSize: 13, fontWeight: 800, color: '#f5f7ff' }}>
+      {/* Label text uses the theme's own --text color so it's always readable. */}
+      <div style={{ fontSize: 13, fontWeight: 800, color: theme.vars['--text'] }}>
         {theme.label}
       </div>
 

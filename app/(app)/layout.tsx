@@ -51,6 +51,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [hydrated, app.authed, router]);
 
+  // Close the mobile drawer on any route change (catches browser back, content-
+  // area links, and programmatic router.push from outside MobileNav.go()).
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
   // Stable placeholder until we know the real auth state (no hydration mismatch,
   // no flash of authed chrome). Also covers the brief moment after an unauthed
   // user is detected but before the redirect lands.

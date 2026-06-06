@@ -454,8 +454,11 @@ export const useStore = create<AppState>()((set, get) => ({
   // ── Settings ──────────────────────────────────────────────────────────────
   setSetting(key, value) {
     set((s) => ({ settings: { ...s.settings, [key]: value } }));
-    // Fire-and-forget persist of the single setting (repository is async).
-    void localStorageRepository.setSetting(key, value);
+    // Persist the FULL current state snapshot so in-memory wallet/bet mutations
+    // not yet flushed by the 400ms debounce are not overwritten.
+    // localStorageRepository.setSetting() re-reads from storage (stale blob risk),
+    // so we use saveState with the live in-memory snapshot instead.
+    void localStorageRepository.saveState(toPersisted(get()));
   },
 
   setTheme(theme) {

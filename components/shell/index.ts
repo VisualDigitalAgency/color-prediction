@@ -11,3 +11,7 @@ export { TopBar } from './TopBar';
 export type { TopBarProps } from './TopBar';
 export { AgeGate } from './AgeGate';
 export { MobileNav } from './MobileNav';
+export { NavButton } from './NavButton';
+export type { NavButtonProps } from './NavButton';
+export { NavLogout } from './NavLogout';
+export { VipMiniCard } from './VipMiniCard';

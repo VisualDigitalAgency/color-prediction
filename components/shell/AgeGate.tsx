@@ -9,6 +9,12 @@
  * Confirming calls `setSetting('ageConfirmed', true)` which persists durably via
  * the store, so the gate never re-appears for a returning confirmed user.
  *
+ * PHASE-2 NOTE: `ageConfirmed` is stored in client-side localStorage and can be
+ * set to `true` via DevTools. This is acceptable for the Phase-1 demo (no real
+ * money). Before enabling any real-money flows in Phase 2, replace this gate with
+ * a server-authoritative check (e.g. signed session claim) that cannot be bypassed
+ * by editing localStorage.
+ *
  * SSR-SAFETY / no flash:
  *   The store's `ageConfirmed` is seeded with a default but the REAL value only
  *   becomes known after `hydrate()` runs (in an effect). Rendering the gate
