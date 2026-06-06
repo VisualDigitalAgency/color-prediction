@@ -4,6 +4,45 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 6 — Zustand store (state + actions + hydration + timer + `useApp()`):**
+  - `lib/store/store.ts`: `create<AppState>()` single source of truth. Durable slice
+    (`auth`, `user`, `wallet`, `bets`, `tx`, `vip`, `rewards`, `settings`) + transient slice
+    (`now`, `toasts`, `celebration`, `hydrated`, `screen`). Seeds from `createSeedState()` at
+    construction (`now: 0` — SSR-safe, no `Date.now()` at module load). Actions:
+    `hydrate()`/`applyPersisted()`, `setNow()`/`settle(now)`, `placeBet`/`deposit`/`withdraw`/
+    `claimSpinPrize`/`claimCheckIn`/`claimMission` (all Promise-returning per the async seam),
+    `setAuthed`/`navigate`, `pushToast`/`dismissToast`/`clearCelebration`, `setSetting`/`setTheme`.
+    All money math goes through `add`/`sub`/`mul` (integer minor-units; zero float arithmetic).
+    Settlement ports the prototype faithfully: on period roll it computes `resultForPeriod`,
+    flips each pending bet won/lost via `betWins`, credits `mul(stake, payoutMult)` to the
+    `winning` sub-wallet, writes a win-payout tx, and sets the celebration. **Idempotent** — a bet
+    is only touched while `status === 'pending'` AND its period has rolled (`curIdx > periodIdx`),
+    so repeat `settle()` calls for the same/later tick are no-ops. placeBet credits the `bet`-tx +
+    deducts main; spin/check-in/mission claims credit the `bonus` sub-wallet (moved inline from
+    `web-pages2.jsx`). `toPersisted()` extracts the durable slice only.
+  - `lib/store/useApp.ts`: `useApp()` reconstructs the prototype `app.*` shape on top of the store
+    (wallet/tx/bets/vip/rewards/settings, `totalBalance()`, `navigate`, `pushToast`, `placeBet`,
+    pure game helpers `MODES`/`MODE_LABEL`/`periodAt`/`secondsLeft`/`recentResults`/`resultForPeriod`).
+    Shallow slice subscription (`zustand/react/shallow`) that deliberately EXCLUDES `now`, so the
+    250ms tick never re-renders `useApp()` consumers. Live clock is a separate opt-in (`useAppNow()`
+    / prefer `useNow()`), keeping slice isolation.
+  - `lib/store/useNow.ts`: SSR-safe live wall-clock — returns `0` until mounted, then ticks every
+    250ms via `setInterval` in an effect, also driving `setNow()` (and thus settlement). Pauses on
+    `document visibilitychange` (hidden) and catches up on visible; cleans up on unmount.
+  - `lib/store/hydration.ts`: `useHydration()` mount hook — hydrates from `repository.loadState()`
+    (seeds + persists if empty) and installs a debounced (400ms) persist subscription that fires
+    ONLY when a durable field changes (a `now` tick or toast never schedules a write); persists the
+    durable slice via `toPersisted()`.
+  - `lib/store/index.ts`: barrel exporting `useStore`/`AppState`, `useApp`/`AppApi`/`useAppNow`,
+    `useNow`, `useHydration`, `toPersisted`, and transient value types.
+  - `lib/store/store.test.ts`: 19 Vitest tests — placeBet decrements main by exact integer
+    minor-units + writes a bet-tx + rejects over-balance; settlement credits the `winning` wallet,
+    writes a win-tx, sets celebration, and is idempotent (no double-credit on repeat `settle`);
+    deposit/withdraw update wallet + tx and reject over-balance; claim* credit the bonus wallet;
+    every money-mutating action returns a Promise; transient state is excluded by `toPersisted`.
+    In-memory localStorage mock + store reset (no jsdom).
+  - `tsc --noEmit` clean; full suite 129 tests pass (money + fair + persistence + store).
+
 - **Step 5 — Persistence layer (DataRepository seam + LocalStorageRepository):**
   - `lib/persistence/repository.ts`: documents the storage seam (ADR 0004) and re-exports the
     async `DataRepository` contract from `@/types`, plus a `Repository` type alias. Callers depend
