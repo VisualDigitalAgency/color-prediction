@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 6 (store: Zustand hydrate/persist/settlement + `useApp()`) ✅ done — next: step 7 (primitives + Icon)
+**Last updated:** 2026-06-06 · **Current step:** 7 (primitives + Icon + color-blind cue) ✅ done — next: step 8 (`(app)` shell + nav + auth/age gates + overlays)
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -65,7 +65,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | 4 | `lib/fair/*` pure fns + golden-value unit tests | engine-agent | 2 | ☑ | ported verbatim (FNV-1a `Math.imul`/`>>> 0`); zero React deps; 45 golden tests pass; "Fair Play (demo)" label only |
 | 5 | `DataRepository` (async) + `LocalStorageRepository` + seed data | store-agent | 2,4 | ☑ | versioned keys `aurawin:v1:*`; SSR-safe; 23 vitest tests pass; `tsc` clean |
 | 6 | Store (Zustand): hydrate, debounced persist, timer/`useNow`, settlement, `useApp()` | store-agent | 4,5 | ☑ | async actions return Promises; idempotent settlement; slice-subscribed `useApp()`; 19 store tests; `tsc` clean |
-| 7 | Primitives + Icon (+ color-blind cue) | primitives-agent | 3,6 | ☐ | diff vs screenshot crops |
+| 7 | Primitives + Icon (+ color-blind cue) | primitives-agent | 3,6 | ☑ | Pass A inline-parity; Icon + Button/Card/SectionHead/CountUp/ResultBall + Sheet/Toaster/Celebration; ResultBall G/R/V cue; Celebration honors reduced-motion; `tsc` clean. diff vs screenshot crops deferred to pixel-QA gate |
 | 8 | `(app)/layout.tsx` shell + `lib/nav.ts` + auth gate + AgeGate + overlays | shell-agent | 6,7 | ☐ | |
 | 9 | Landing `/` + AuthModal + age-gate + "simulated" disclaimer | shell-agent | 7,8 | ☐ | |
 | 10 | Screens **Pass A** (inline-parity) | screen-porter ×N | 8,9 | ☐ | see screen table |

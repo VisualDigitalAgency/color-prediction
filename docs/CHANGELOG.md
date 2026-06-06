@@ -4,6 +4,35 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 7 — Shared UI primitives (Pass A, inline-style parity):** ported VERBATIM from
+  the CDN prototype (`/tmp/proto_extract/app/{components,icons}.jsx`); `createElement(...)`
+  → JSX with `style={{…}}` objects kept byte-identical (all brand/theme values stay as
+  `var(--…)`, zero hardcoded hex). Tailwind refactor deferred to Pass B (behind the pixel-QA gate).
+  - `components/icons/Icon.tsx`: inline stroke icon set (port of the `S`/`P`/`C` helpers) with
+    typed `IconProps` + `IconName` union (`satisfies Record<string, IconRenderer>`).
+  - `components/primitives/`: `Button` (5 variants × 3 sizes, press-scale handlers),
+    `Card`, `SectionHead` (server components), `CountUp` (rAF cubic-ease tween; SSR-safe —
+    `disp` seeds from the `value` prop so first render matches server, animation runs only in
+    `useEffect`), `ResultBall` (incl. `numColorStyle` color rules: 0=red/violet split,
+    5=green/violet split, 1/3/7/9=green, else red).
+  - **A11Y color-blind cue (hard Phase-1 req, docs/A11Y.md):** `ResultBall` adds a small
+    non-color glyph badge using `lib/strings.ts colorBlindShort` (G / R / V), so red vs green
+    is distinguishable without hue; split numbers (0, 5) show both letters. Visual otherwise
+    identical to the prototype.
+  - `components/feedback/`: `Sheet` (bottom-sheet, `sheetUp`/`fadeIn` keyframes),
+    `Toaster` (store-subscribed via `useApp()`, rendered through a `createPortal` to
+    `document.body` — SSR-safe, mounts client-only; `toastIn` keyframe, per-kind border tint),
+    `Celebration` (store-subscribed; trophy + `CountUp` payout via `fromMinor`; profit line via
+    `formatMoney`; `confetti`/`popIn`/`fadeIn` keyframes).
+  - **Reduced-motion (hard req):** `Celebration` skips the confetti layer entirely when reduced
+    motion is requested — either `settings.reducedMotion` (in-app toggle) OR the OS
+    `prefers-reduced-motion: reduce` media query (read client-side via `matchMedia`); the
+    celebration stays comprehensible without animation (the global CSS rule near-instants the
+    entrance too).
+  - Barrels: `components/icons/index.ts`, `components/primitives/index.ts`,
+    `components/feedback/index.ts`. `'use client'` on every hook/effect/portal/store-connected
+    component; pure markup primitives (`Card`, `SectionHead`, `Icon`) stay server components.
+  - `tsc --noEmit` clean. No "provably fair" strings. Pixel diff-vs-screenshot deferred to the QA gate.
 - **Step 6 — Zustand store (state + actions + hydration + timer + `useApp()`):**
   - `lib/store/store.ts`: `create<AppState>()` single source of truth. Durable slice
     (`auth`, `user`, `wallet`, `bets`, `tx`, `vip`, `rewards`, `settings`) + transient slice
