@@ -34,3 +34,13 @@ with localStorage behind a repository seam.
 ## Don'ts
 - Don't port the mock Chrome frame, Tweaks panel, `Stage`/`WebFrame`, or the native mobile flavor.
 - Don't introduce a backend, real auth, or crypto custody in Phase 1.
+
+## Code Review Standards
+After completing any implementation, review the code for:
+- Functions longer than 30 lines (likely doing too much)
+- Logic duplicated more than twice (extract to utility)
+- Any `any` type usage in TypeScript (replace with real types)
+- Components with more than 3 props that could be grouped into an object
+- Missing error handling on async operations
+
+Run /simplify before presenting code to the user.
