@@ -4,6 +4,39 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 10 — All remaining screens Pass A (game/wallet/rewards/profile cluster):**
+  27 files, 3054 lines. All 12 app routes compile as static; tsc clean; 129 tests pass.
+  - `/game` (`components/game/Game.tsx`): ModeTabs (4 round modes), Board (live timer
+    with digit tiles + last-10 ResultBalls + color/number/size pick grid + betting-closed
+    overlay), BetSlip (amount+multiplier chips, stake/payout preview, `placeBet()` call
+    with minor-unit conversion), MyBets (current-period bets from store), Records (SVG
+    trend chart + recent draws). Timer uses `useNow()`; `locked` = `secondsLeft ≤ 5`.
+    "Provably fair" → `STRINGS.game.fairPlay` (ADR 0006).
+  - `/wallet` (`Wallet.tsx`): total balance `CountUp` + deposit/withdraw CTAs + 4 wallet
+    stat cards + recent tx via `TxTable`.
+  - `/deposit` (`Deposit.tsx`): 3-network selector (TRC20/BEP20/ERC20), quick-simulate
+    amount chips (50/100/500/1000), `app.deposit({ network, amt: toMinor(v) })`, pseudo-QR
+    + clipboard copy.
+  - `/withdraw` (`Withdraw.tsx`): amount input + MAX, address field, 1% fee summary,
+    `app.withdraw({ network:'trc20', address, amt: toMinor(n) })`.
+  - `/history` (`History.tsx`): tx/bets tab switcher; tx via `TxTable`; bets table with
+    `ResultBall` for settled bets, `StatusBadge`, mode label, payout/stake amounts.
+  - Shared: `StatusBadge` (color-coded pill), `QR` (deterministic pseudo-QR), `TxTable`
+    (createdAt formatted from unix ms, not prototype `.t` string).
+  - `/rewards` (`Rewards.tsx` + `SpinWheel.tsx` + `CheckIn.tsx`): `SpinWheel` — visual
+    CSS conic-gradient wheel with 4.1s cubic-bezier spin animation, `claimSpinPrize()`;
+    `CheckIn` — 7-day grid from `app.rewards.checkInRewards`, claimed state from
+    `app.rewards.checkInClaimed`, `claimCheckIn()`; missions from `app.rewards.missions`
+    with progress bar + `claimMission(id)`.
+  - `/referral` (`Referral.tsx`): commission balance card + invite link copy + team/active/
+    turnover stat chips + 3-tier commission breakdown (30%/15%/5%).
+  - `/vip` (`Vip.tsx`): VIP level + XP progress bar + 4 perk cards + 5-tier grid (Bronze
+    → Crown) with current-tier highlight.
+  - `/profile` (`Profile.tsx`): avatar card + VIP badge + 5-row settings menu.
+  - Money discipline: all `formatMoney()` calls on minor-unit store values;
+    `toMinor()` at placeBet/deposit/withdraw call sites; display floats (`CountUp`) via
+    `fromMinor()`.
+
 - **Step 10 — Lobby `/lobby` screen (Pass A, inline parity):** ported `Lobby`
   from `web-pages.jsx` verbatim (promo + total-balance card, 4 sub-wallet stat
   cards, games grid, live-winners feed, recent Wingo results). Money in minor-units
