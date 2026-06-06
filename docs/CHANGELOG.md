@@ -4,6 +4,31 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 14 — Tests (unit/component + Playwright CI gate):**
+  - **Component tests** (jsdom, `@testing-library/react` v16): 4 new test suites for
+    `Button`, `Card`, `ResultBall`, and `SectionHead` primitives covering rendering,
+    interaction (onClick, disabled), style props, a11y attributes (aria-label, aria-hidden),
+    and color-blind cue correctness (G/R/V labels on all 10 digit variants).
+  - **Strings tests** (`lib/strings.test.ts`): Enforces hard project rules in CI — no
+    "provably fair" copy anywhere, `colorBlindShort` has exactly G/R/V, `PAYOUT_MULTIPLIERS`
+    match prototype, CHECK_IN_REWARDS are 7 ascending positive integers.
+  - **Test infrastructure**: `tests/setup.ts` with `@testing-library/jest-dom/vitest` +
+    `afterEach(cleanup)`. Vitest config updated with `exclude: ['tests/e2e/**']` so Playwright
+    specs aren't picked up by Vitest. `@vitest-environment jsdom` per-file docblock on all
+    component tests.
+  - **Playwright visual regression**: `playwright.config.ts` (Chromium, 1280×900 desktop,
+    webServer: build + start); `tests/e2e/visual.spec.ts` (landing unauthenticated; all 11
+    authed routes × 3 themes = 33 visual snapshots; age-gate overlay; disclaimer text check);
+    `tests/e2e/helpers.ts` (`injectAuthState`, `waitForHydration`). Run
+    `npm run test:e2e:update` to capture golden snapshots on first run.
+  - **GitHub Actions CI** (`.github/workflows/ci.yml`): 3-job pipeline:
+    `unit` (tsc + vitest) → `build` (next build + artifact upload) → `e2e` (Playwright,
+    Chromium only, uploads report + diffs on failure). Runs on all `claude/**` pushes +
+    PRs to main. Fail-fast via `cancel-in-progress`.
+  - **package.json scripts**: `test`, `test:watch`, `test:e2e`, `test:e2e:update`.
+  - Result: 198 unit/component tests pass (tsc clean). Playwright infra ready for first
+    snapshot capture.
+
 - **Step 11 — Screens Pass B (Tailwind v4 refactor):** All 12 app screens + shared
   sub-components (SpinWheel, CheckIn, TxTable, StatusBadge, QR) refactored from Pass A
   inline `style={{}}` objects to Tailwind v4 utility classes. Strategy: layout/spacing/
