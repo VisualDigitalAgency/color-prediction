@@ -60,7 +60,7 @@ const WINNERS: [string, string, number][] = [
 ];
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="pt-6 px-7 pb-12 mx-auto max-w-[1180px]">{children}</div>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto max-w-[1180px]">{children}</div>
 );
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
@@ -94,7 +94,7 @@ export function Lobby() {
   return (
     <Wrap>
       {/* promo + balance */}
-      <div className="grid grid-cols-[1.4fr_1fr] gap-[18px] mb-[18px]">
+      <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-[18px] mb-[18px]">
         <div
           className="rounded-[var(--radius)] py-[30px] px-8 text-white relative overflow-hidden"
           style={{
@@ -127,7 +127,7 @@ export function Lobby() {
       </div>
 
       {/* wallet stat cards */}
-      <div className="grid grid-cols-[repeat(4,1fr)] gap-3.5 mb-[26px]">
+      <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-3.5 mb-[26px]">
         {wallets.map((w, i) => (
           <Card key={i} pad={18}>
             <div className="text-xs text-[var(--text-mute)] font-semibold mb-1.5">{w[0]}</div>
@@ -138,7 +138,7 @@ export function Lobby() {
 
       {/* games */}
       <H2>{L.games}</H2>
-      <div className="grid grid-cols-[repeat(4,1fr)] gap-4 mb-7">
+      <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-4 mb-7">
         {GAMES.map((g) => (
           <div
             key={g.key}

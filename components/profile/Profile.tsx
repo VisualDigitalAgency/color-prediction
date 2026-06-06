@@ -16,7 +16,7 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div className="pt-6 px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );

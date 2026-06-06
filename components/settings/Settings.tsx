@@ -22,7 +22,7 @@ const THEME_IDS: ThemeId[] = ['neon', 'fintech', 'cyber'];
 
 function Wrap({ children }: { children: React.ReactNode }) {
   return (
-    <div className="pt-6 px-7 pb-12 mx-auto max-w-[760px]">
+    <div className="pt-6 px-4 app:px-7 pb-12 mx-auto max-w-[760px]">
       {children}
     </div>
   );

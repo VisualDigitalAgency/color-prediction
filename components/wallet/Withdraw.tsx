@@ -20,7 +20,7 @@ const inputCls =
   'w-full bg-bg border border-[var(--border)] rounded-[var(--radius-sm)] py-3.5 px-4 text-text text-[15px] font-semibold font-sans outline-none box-border';
 
 const Wrap = ({ children, w = 620 }: { children: React.ReactNode; w?: number }) => (
-  <div className="pt-6 px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );

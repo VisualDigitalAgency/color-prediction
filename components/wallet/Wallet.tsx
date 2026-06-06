@@ -15,7 +15,7 @@ import { Icon } from '@/components/icons/Icon';
 import { TxTable } from './TxTable';
 
 const Wrap = ({ children, w = 980 }: { children: React.ReactNode; w?: number }) => (
-  <div className="pt-6 px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
@@ -39,7 +39,7 @@ export function Wallet() {
 
   return (
     <Wrap w={980}>
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 app:grid-cols-2 gap-4 mb-4">
         <Card glow pad={24}>
           <div className="text-xs text-[var(--text-mute)] font-bold">
             TOTAL BALANCE

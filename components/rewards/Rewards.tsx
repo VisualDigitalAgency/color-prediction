@@ -22,7 +22,7 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div className="pt-6 px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
@@ -39,7 +39,7 @@ export function Rewards() {
 
   return (
     <Wrap w={1080}>
-      <div className="grid grid-cols-[380px_1fr] gap-[18px] items-start">
+      <div className="grid grid-cols-1 app:grid-cols-[380px_1fr] gap-[18px] items-start">
         <SpinWheel />
         <div className="flex flex-col gap-[18px]">
           <CheckIn />

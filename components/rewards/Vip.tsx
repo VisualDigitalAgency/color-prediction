@@ -15,7 +15,7 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div style={{ maxWidth: w }} className="pt-6 px-7 pb-12 mx-auto">
+  <div style={{ maxWidth: w }} className="pt-6 px-4 app:px-7 pb-12 mx-auto">
     {children}
   </div>
 );
@@ -77,7 +77,7 @@ export function Vip() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-[repeat(4,1fr)] gap-3.5 mb-6">
+      <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-3.5 mb-6">
         {(
           [
             ['Daily cashback', '0.8%', 'gift'],
@@ -101,7 +101,7 @@ export function Vip() {
       </div>
 
       <H2>All tiers</H2>
-      <div className="grid grid-cols-[repeat(5,1fr)] gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 app:grid-cols-[repeat(5,1fr)] gap-3.5">
         {TIERS.map((t) => (
           <Card
             key={t[0]}

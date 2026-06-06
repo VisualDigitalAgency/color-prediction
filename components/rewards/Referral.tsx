@@ -17,7 +17,7 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div style={{ maxWidth: w }} className="pt-6 px-7 pb-12 mx-auto">
+  <div style={{ maxWidth: w }} className="pt-6 px-4 app:px-7 pb-12 mx-auto">
     {children}
   </div>
 );
@@ -35,7 +35,7 @@ export function Referral() {
 
   return (
     <Wrap w={1080}>
-      <div className="grid grid-cols-[1.2fr_1fr] gap-[18px] mb-[18px]">
+      <div className="grid grid-cols-1 app:grid-cols-[1.2fr_1fr] gap-[18px] mb-[18px]">
         <Card
           glow
           pad={26}
@@ -73,7 +73,7 @@ export function Referral() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-[repeat(3,1fr)] gap-3.5">
+        <div className="grid grid-cols-3 gap-3.5">
           {(
             [
               ['Team', '128', 'users'],
@@ -97,7 +97,7 @@ export function Referral() {
       </div>
 
       <H2>Commission levels</H2>
-      <div className="grid grid-cols-[repeat(3,1fr)] gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-[repeat(3,1fr)] gap-3.5">
         {(
           [
             ['Level 1', 'Direct invites', '30%', 'var(--green)'],

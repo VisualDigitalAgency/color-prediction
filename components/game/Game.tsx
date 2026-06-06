@@ -39,7 +39,7 @@ function ModeTabs({
   app: ReturnType<typeof useApp>;
 }) {
   return (
-    <div className="flex gap-2.5 mb-[18px]">
+    <div className="flex flex-wrap gap-2 mb-[18px]">
       {app.MODES.map((m) => {
         const on = m === mode;
         return (
@@ -216,7 +216,7 @@ function Board({
         <div className="text-xs font-bold text-[var(--text-mute)] mb-3">
           PICK A NUMBER · Win 9×
         </div>
-        <div className="grid grid-cols-[repeat(10,1fr)] gap-2.5 mb-[22px]">
+        <div className="grid grid-cols-5 app:grid-cols-[repeat(10,1fr)] gap-2.5 mb-[22px]">
           {Array.from({ length: 10 }).map((_, n) => (
             <button
               key={n}
@@ -605,9 +605,9 @@ export function Game() {
   }, [mode]);
 
   return (
-    <div className="pt-6 px-7 pb-10 mx-auto max-w-[1180px]">
+    <div className="pt-6 px-4 app:px-7 pb-10 mx-auto max-w-[1180px]">
       <ModeTabs mode={mode} setMode={setMode} app={app} />
-      <div className="grid grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
+      <div className="grid grid-cols-1 app:grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
         <Board
           mode={mode}
           app={app}

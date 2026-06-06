@@ -17,7 +17,7 @@ import { TxTable } from './TxTable';
 import { StatusBadge } from './StatusBadge';
 
 const Wrap = ({ children, w = 980 }: { children: React.ReactNode; w?: number }) => (
-  <div className="pt-6 px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
@@ -53,8 +53,8 @@ export function History() {
       {tab === 'tx' ? (
         <TxTable items={app.tx} />
       ) : app.bets.length ? (
-        <div className="bg-surface border border-[var(--border)] rounded-[var(--radius)] p-2 shadow-[var(--card-shadow)]">
-          <table className="w-full border-collapse">
+        <div className="bg-surface border border-[var(--border)] rounded-[var(--radius)] p-2 shadow-[var(--card-shadow)] overflow-x-auto">
+          <table className="w-full border-collapse min-w-[480px]">
             <tbody>
               {app.bets.map((b, i) => {
                 const pickStr = String(b.pick);

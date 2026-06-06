@@ -73,7 +73,7 @@ export function Landing() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-[1180px] mx-auto px-8">
+      <div className="max-w-[1180px] mx-auto px-4 app:px-8">
         {/* nav */}
         <div className="flex items-center justify-between py-6">
           <div className="flex items-center gap-[11px]">
@@ -94,13 +94,13 @@ export function Landing() {
         </div>
 
         {/* hero */}
-        <div className="grid grid-cols-[1.05fr_.95fr] gap-10 items-center pt-[50px] pb-[60px]">
+        <div className="grid grid-cols-1 app:grid-cols-[1.05fr_.95fr] gap-10 items-center pt-[30px] pb-[30px] app:pt-[50px] app:pb-[60px]">
           <div>
             <div className="inline-flex items-center gap-[7px] py-1.5 px-[13px] rounded-full bg-[var(--glass)] border border-[var(--glass-brd)] text-xs font-bold text-[var(--accent-2)] mb-[22px]">
               <span className="size-[7px] rounded-[4px] bg-green shadow-[var(--glow-green)]" />
               {'12,480 ' + STRINGS.landing.playersOnline}
             </div>
-            <h1 className="text-[58px] leading-[1.04] font-black text-text mt-0 mb-[18px] tracking-[-1px]">
+            <h1 className="text-[36px] app:text-[58px] leading-[1.04] font-black text-text mt-0 mb-[18px] tracking-[-1px]">
               {STRINGS.landing.heroTitle}
               <br />
               <span
@@ -180,7 +180,7 @@ export function Landing() {
         </div>
 
         {/* features */}
-        <div className="grid grid-cols-[repeat(4,1fr)] gap-4 pb-[70px]">
+        <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-4 pb-[40px] app:pb-[70px]">
           {feats.map((f, i) => (
             <Card key={i} pad={20}>
               <div className="size-11 rounded-[13px] bg-[var(--glass)] border border-[var(--glass-brd)] text-[var(--accent-2)] flex items-center justify-center mb-3.5">

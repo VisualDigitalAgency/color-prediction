@@ -48,7 +48,7 @@ const NETWORKS: Network[] = [
 ];
 
 const Wrap = ({ children, w = 920 }: { children: React.ReactNode; w?: number }) => (
-  <div style={{ maxWidth: w }} className="pt-6 px-7 pb-12 mx-auto">
+  <div style={{ maxWidth: w }} className="pt-6 px-4 app:px-7 pb-12 mx-auto">
     {children}
   </div>
 );
@@ -67,7 +67,7 @@ export function Deposit() {
 
   return (
     <Wrap w={920}>
-      <div className="grid grid-cols-2 gap-[18px]">
+      <div className="grid grid-cols-1 app:grid-cols-2 gap-[18px]">
         <div>
           <H2>Select network</H2>
           <div className="flex flex-col gap-2.5 mb-5">
