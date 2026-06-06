@@ -193,14 +193,18 @@ export const useStore = create<AppState>()((set, get) => ({
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   async hydrate() {
     if (get().hydrated) return;
-    const loaded = await localStorageRepository.loadState();
-    const state = loaded ?? createSeedState();
-    // Persist the seed on first run so subsequent loads are stable.
-    if (!loaded) {
-      await localStorageRepository.saveState(state);
+    try {
+      const loaded = await localStorageRepository.loadState();
+      const state = loaded ?? createSeedState();
+      if (!loaded) {
+        await localStorageRepository.saveState(state);
+      }
+      get().applyPersisted(state);
+    } catch {
+      // localStorage unavailable or corrupt; operate on seed state already in store.
+    } finally {
+      set({ hydrated: true });
     }
-    get().applyPersisted(state);
-    set({ hydrated: true });
   },
 
   applyPersisted(state) {
@@ -249,7 +253,6 @@ export const useStore = create<AppState>()((set, get) => ({
     if (!changed) return;
 
     if (credit > 0) {
-      const { wallet, tx } = get();
       const winTx: Transaction = {
         id: genId('w'),
         type: 'win',
@@ -259,12 +262,12 @@ export const useStore = create<AppState>()((set, get) => ({
         status: 'success',
         createdAt: Date.now(),
       };
-      set({
+      set((s) => ({
         bets: nextBets,
-        wallet: { ...wallet, winning: add(wallet.winning, credit) },
-        tx: [winTx, ...tx],
+        wallet: { ...s.wallet, winning: add(s.wallet.winning, credit) },
+        tx: [winTx, ...s.tx],
         celebration: { amount: netWin, credit, at: Date.now() },
-      });
+      }));
     } else {
       set({ bets: nextBets });
       get().pushToast(STRINGS.game.noWin, 'info');
@@ -274,6 +277,10 @@ export const useStore = create<AppState>()((set, get) => ({
   // ── Money / outcomes ──────────────────────────────────────────────────────
   async placeBet(input) {
     const { wallet } = get();
+    // Reject zero or negative stakes before touching the wallet.
+    if (input.stake <= 0) {
+      return { ok: false, error: STRINGS.game.insufficientBalance };
+    }
     // Validate stake against the available main balance (minor-units).
     if (input.stake > wallet.main) {
       const msg = STRINGS.game.insufficientBalance;

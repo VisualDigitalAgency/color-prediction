@@ -10,7 +10,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store/useApp';
-import { formatMoney, toMinor } from '@/lib/money';
+import { formatMoney, toMinor, fromMinor, mul, sub } from '@/lib/money';
 import { ROUTES } from '@/lib/nav';
 import { Card } from '@/components/primitives/Card';
 import { Button } from '@/components/primitives/Button';
@@ -43,8 +43,9 @@ export function Withdraw() {
   const [addr, setAddr] = useState('');
 
   const n = parseFloat(amt) || 0;
-  const fee = +(n * 0.01).toFixed(2);
-  const recv = Math.max(0, +(n - fee).toFixed(2));
+  const nMinor = toMinor(n);
+  const feeMinor = mul(nMinor, 0.01);
+  const recvMinor = sub(nMinor, feeMinor);
 
   return (
     <Wrap w={620}>
@@ -106,7 +107,7 @@ export function Withdraw() {
           />
           <Button
             variant="ghost"
-            onClick={() => setAmt(String(n > 0 ? n : ''))}
+            onClick={() => setAmt(String(fromMinor(app.wallet.main)))}
           >
             MAX
           </Button>
@@ -139,8 +140,8 @@ export function Withdraw() {
         >
           {(
             [
-              ['Network fee (1%)', `−${formatMoney(toMinor(fee))}`],
-              ['You receive', `${formatMoney(toMinor(recv))} USDT`],
+              ['Network fee (1%)', `−${formatMoney(feeMinor)}`],
+              ['You receive', `${formatMoney(recvMinor)} USDT`],
               ['Arrival', '~3 min · on-chain'],
             ] as const
           ).map((r, i) => (
@@ -166,10 +167,10 @@ export function Withdraw() {
         <Button
           full
           size="lg"
-          disabled={!(n > 0 && addr.length > 6)}
+          disabled={!(nMinor > 0 && addr.length > 6)}
           onClick={() => {
             app
-              .withdraw({ network: 'trc20', address: addr, amt: toMinor(n) })
+              .withdraw({ network: 'trc20', address: addr, amt: nMinor })
               .then((result) => {
                 if (result.ok) router.push(ROUTES.wallet);
                 else app.pushToast(result.error ?? 'Withdrawal failed', 'error');

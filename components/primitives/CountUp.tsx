@@ -52,9 +52,10 @@ export function CountUp({ value, dur = 650, prefix = '', d = 2, style }: CountUp
     const tick = (t: number) => {
       const k = Math.min(1, (t - start) / dur);
       const e = 1 - Math.pow(1 - k, 3);
-      setDisp(a + (b - a) * e);
+      const v = a + (b - a) * e;
+      from.current = v;
+      setDisp(v);
       if (k < 1) raf.current = requestAnimationFrame(tick);
-      else from.current = b;
     };
     raf.current = requestAnimationFrame(tick);
     return () => {
