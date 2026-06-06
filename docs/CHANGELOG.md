@@ -4,6 +4,38 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 5 — Persistence layer (DataRepository seam + LocalStorageRepository):**
+  - `lib/persistence/repository.ts`: documents the storage seam (ADR 0004) and re-exports the
+    async `DataRepository` contract from `@/types`, plus a `Repository` type alias. Callers depend
+    only on this interface so the Phase-2 `RestRepository` swap is a pure adapter change.
+  - `lib/persistence/LocalStorageRepository.ts`: concrete Phase-1 `DataRepository`. Every method is
+    async (Promise-returning) though localStorage is synchronous. SSR-safe — all storage access is
+    guarded by `typeof window !== 'undefined'` AND wrapped in try/catch (private-mode/quota/parse
+    failures are non-fatal; reads fall back to seed, writes are best-effort); nothing touches
+    storage at module load. Persists the durable slice only under the single versioned key
+    `aurawin:v1:state` with a `version` migration field (a `migrate()` guard rejects corrupt or
+    version-mismatched blobs → caller falls back to seed). Implements `loadState`/`saveState`,
+    `placeBet` (deducts stake, appends bet + bet-tx), `createDeposit` (credits main), `createWithdrawal`
+    (debits main, pending, 1% fee), `listTransactions`/`listBets`, `get`/`setSetting`. NEVER persists
+    transient state (`now`/`toasts`/`celebration`) or round results (those recompute from the fair
+    engine). Exposes a `localStorageRepository` singleton and `STORAGE_KEYS`.
+  - `lib/persistence/seed.ts`: initial demo snapshot ported from the prototype with all monetary
+    values converted to integer minor-units via `toMinor()` — wallet `{1284.5, 36, 412.75, 88.2}` →
+    `{128450, 3600, 41275, 8820}`; VIP `{level:3, Platinum, points:6420, next:10000}`; rewards
+    (8 spin prizes, check-in days `[2,5,10,15,20,30,88]→minor`, claimed `[0,1]`, 3 missions, 3 free
+    spins); demo user (`player_ace`/`88204417`/KYC 1/VIP 3). `createSeedState()` returns a fresh deep
+    copy each call; clean install starts with empty bet/tx ledgers. `SCHEMA_VERSION = 1`.
+  - `lib/persistence/index.ts`: barrel exporting the contract, the `LocalStorageRepository` +
+    singleton + `STORAGE_KEYS`, and the seed helpers.
+  - `lib/persistence/LocalStorageRepository.test.ts`: 23 Vitest tests — SSR-safety (no crash when
+    `window` undefined), round-trip save/load equivalence, versioned `aurawin:v1:*` key + `version`
+    field, seed values are integer minor-units, transient state never serialized, and
+    placeBet/deposit/withdraw/setSetting mutations persisting with integer balances. Uses an
+    in-memory localStorage mock (no jsdom).
+  - `vitest.config.ts`: maps the `@/` path alias (mirrors tsconfig) so test files import source
+    modules the same way the app does; default `node` environment.
+  - `tsc --noEmit` clean; full suite 110 tests pass (money + fair + persistence).
+
 - **Step 4 — Deterministic round engine + golden tests:**
   - `lib/fair/engine.ts`: pure-TypeScript round engine ported verbatim from the prototype
     (`app/store.jsx`), with ZERO React/store/DOM dependencies so a Phase-2 API route can import

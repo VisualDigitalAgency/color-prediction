@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 4 (fair engine + golden tests) ✅ done — next: step 5 (persistence: DataRepository + LocalStorageRepo)
+**Last updated:** 2026-06-06 · **Current step:** 5 (persistence: DataRepository + LocalStorageRepo) ✅ done — next: step 6 (store: Zustand hydrate/persist/settlement)
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -63,7 +63,7 @@ The repository seam IS the agent seam. **Sequence the spine; parallelize the scr
 | 2 | `types/*` + `lib/money.ts` (minor-units) + `lib/strings.ts` (i18n-lite) | types-agent | 1 | ☑ | schema-first; `tsc` clean; vitest money tests pass |
 | 3 | Theme system: `themes.ts`, `ThemeProvider`, no-flash script, `next/font` (×3) | theme-agent | 2 | ☑ | 3 themes (neon/fintech/cyber) verbatim from prototype; vars also in globals.css `[data-theme]` blocks; preload all 3 fonts (ADR 0007) |
 | 4 | `lib/fair/*` pure fns + golden-value unit tests | engine-agent | 2 | ☑ | ported verbatim (FNV-1a `Math.imul`/`>>> 0`); zero React deps; 45 golden tests pass; "Fair Play (demo)" label only |
-| 5 | `DataRepository` (async) + `LocalStorageRepository` + seed data | store-agent | 2,4 | ☐ | versioned keys `aurawin:v1:*` |
+| 5 | `DataRepository` (async) + `LocalStorageRepository` + seed data | store-agent | 2,4 | ☑ | versioned keys `aurawin:v1:*`; SSR-safe; 23 vitest tests pass; `tsc` clean |
 | 6 | Store (Zustand): hydrate, debounced persist, timer/`useNow`, settlement, `useApp()` | store-agent | 4,5 | ☐ | async actions return Promises |
 | 7 | Primitives + Icon (+ color-blind cue) | primitives-agent | 3,6 | ☐ | diff vs screenshot crops |
 | 8 | `(app)/layout.tsx` shell + `lib/nav.ts` + auth gate + AgeGate + overlays | shell-agent | 6,7 | ☐ | |
