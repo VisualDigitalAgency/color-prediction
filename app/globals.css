@@ -90,3 +90,109 @@ input {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---- Per-theme CSS variables (ported VERBATIM from prototype app/themes.js) ----
+   ThemeProvider also sets these on <html> at runtime via useLayoutEffect; these
+   static blocks give the no-flash script (which only sets data-theme before
+   paint) a correct first paint and keep CSS-only contexts (e.g. SSR) themed.
+   Only VALUES change between themes — layout never branches per theme.
+   --app-font references the next/font CSS vars declared in app/layout.tsx. */
+[data-theme="neon"] {
+  --app-font: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  --screen: radial-gradient(120% 80% at 50% -10%, #16123a 0%, #0a0a17 42%, #06060d 100%);
+  --bg: #06060d;
+  --surface: #13141f;
+  --surface-2: #1b1d2b;
+  --surface-3: #23263a;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-brd: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f5f7ff;
+  --text-dim: #9ea4be;
+  --text-mute: #5d6280;
+  --green: #15e08a;
+  --green-2: #0bbf72;
+  --red: #ff3460;
+  --red-2: #e51e4d;
+  --violet: #b14bff;
+  --gold: #ffc63d;
+  --accent: #15e08a;
+  --accent-2: #ffc63d;
+  --accent-ink: #04130c;
+  --radius: 20px;
+  --radius-sm: 13px;
+  --chip: #23263a;
+  --glow-green: 0 0 22px rgba(21, 224, 138, 0.55);
+  --glow-red: 0 0 22px rgba(255, 52, 96, 0.55);
+  --glow-violet: 0 0 22px rgba(177, 75, 255, 0.55);
+  --glow-accent: 0 0 28px rgba(21, 224, 138, 0.5);
+  --card-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
+  --header-grad: linear-gradient(135deg, #1ce08a 0%, #0bb568 100%);
+}
+
+[data-theme="fintech"] {
+  --app-font: var(--font-manrope), "Manrope", system-ui, sans-serif;
+  --screen: linear-gradient(180deg, #0e1117 0%, #0a0c11 100%);
+  --bg: #0a0c11;
+  --surface: #141821;
+  --surface-2: #1b2029;
+  --surface-3: #242a35;
+  --glass: rgba(255, 255, 255, 0.035);
+  --glass-brd: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.06);
+  --text: #eef1f7;
+  --text-dim: #9aa2b2;
+  --text-mute: #5b6373;
+  --green: #2fce97;
+  --green-2: #22b582;
+  --red: #ef6a72;
+  --red-2: #dd4d56;
+  --violet: #8e7cf2;
+  --gold: #e3b964;
+  --accent: #e3b964;
+  --accent-2: #2fce97;
+  --accent-ink: #1a1405;
+  --radius: 16px;
+  --radius-sm: 11px;
+  --chip: #232934;
+  --glow-green: 0 0 14px rgba(47, 206, 151, 0.28);
+  --glow-red: 0 0 14px rgba(239, 106, 114, 0.28);
+  --glow-violet: 0 0 14px rgba(142, 124, 242, 0.28);
+  --glow-accent: 0 0 18px rgba(227, 185, 100, 0.3);
+  --card-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.85);
+  --header-grad: linear-gradient(135deg, #e8c272 0%, #c79742 100%);
+}
+
+[data-theme="cyber"] {
+  --app-font: var(--font-space-grotesk), "Space Grotesk", var(--font-poppins), "Poppins", system-ui, sans-serif;
+  --screen: radial-gradient(110% 75% at 80% -5%, #1a1150 0%, #0a0a24 45%, #04030f 100%);
+  --bg: #04030f;
+  --surface: rgba(22, 20, 54, 0.66);
+  --surface-2: rgba(38, 33, 82, 0.66);
+  --surface-3: rgba(54, 48, 108, 0.6);
+  --glass: rgba(124, 92, 255, 0.08);
+  --glass-brd: rgba(124, 200, 255, 0.16);
+  --border: rgba(124, 180, 255, 0.14);
+  --text: #ecf1ff;
+  --text-dim: #9fa9d8;
+  --text-mute: #646a9e;
+  --green: #1fffb0;
+  --green-2: #10e09a;
+  --red: #ff4d7d;
+  --violet: #8b5cff;
+  --red-2: #f0356b;
+  --cyan: #1fe0ff;
+  --gold: #ffd24a;
+  --accent: #8b5cff;
+  --accent-2: #1fe0ff;
+  --accent-ink: #0a061f;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --chip: rgba(54, 48, 108, 0.7);
+  --glow-green: 0 0 22px rgba(31, 255, 176, 0.5);
+  --glow-red: 0 0 22px rgba(255, 77, 125, 0.5);
+  --glow-violet: 0 0 22px rgba(139, 92, 255, 0.6);
+  --glow-accent: 0 0 30px rgba(139, 92, 255, 0.6);
+  --card-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.85);
+  --header-grad: linear-gradient(135deg, #8b5cff 0%, #1fe0ff 120%);
+}
