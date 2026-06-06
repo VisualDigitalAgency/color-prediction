@@ -4,6 +4,19 @@ All notable changes to AuraWin. Format loosely follows Keep a Changelog.
 
 ## [Unreleased]
 ### Added
+- **Step 11 — Screens Pass B (Tailwind v4 refactor):** All 12 app screens + shared
+  sub-components (SpinWheel, CheckIn, TxTable, StatusBadge, QR) refactored from Pass A
+  inline `style={{}}` objects to Tailwind v4 utility classes. Strategy: layout/spacing/
+  typography converted to utilities (`flex`, `grid`, `gap-*`, `text-*`, `font-*`, `p-*`,
+  `m-*`, `rounded-*`, `size-*`); CSS custom property references use arbitrary values
+  (`text-[var(--text-mute)]`, `bg-[var(--glass)]`, `rounded-[var(--radius)]`, etc.);
+  brand theme tokens in `@theme inline` use short names (`text-green`, `bg-surface`,
+  `text-text`); only legitimately dynamic values (state-driven gradients, conditional
+  CSS expressions, per-datum colors, Card/SVG style props) remain inline. Removed
+  all `fontFamily: 'inherit'` from buttons (covered by globals.css reset).
+  Result: ~280 inline `style={{}}` calls reduced to ~80 (all dynamic/complex); zero
+  hardcoded hex in class values; tsc clean; 129/129 tests pass.
+
 - **Step 13 — Responsive pass (mobile < 1100 px):** CSS-first approach:
   `app/globals.css` adds `drawerIn` keyframe + `@media (max-width: 1099px)` rules
   for `.app-sidebar` (hidden via `!important` override), `.app-topbar-hamburger`

@@ -15,20 +15,13 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div style={{ maxWidth: w }} className="pt-6 px-7 pb-12 mx-auto">
     {children}
   </div>
 );
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
-  <div
-    style={{
-      fontSize: 16,
-      fontWeight: 800,
-      color: 'var(--text)',
-      margin: '4px 2px 14px',
-    }}
-  >
+  <div className="text-base font-extrabold text-text mt-1 mx-0.5 mb-3.5">
     {children}
   </div>
 );
@@ -56,49 +49,21 @@ export function Vip() {
             'linear-gradient(135deg, var(--surface), color-mix(in srgb,var(--violet) 14%,var(--surface)))',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            marginBottom: 18,
-          }}
-        >
-          <div
-            style={{
-              width: 58,
-              height: 58,
-              borderRadius: 17,
-              background: 'var(--header-grad)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--accent-ink)',
-            }}
-          >
+        <div className="flex items-center gap-3.5 mb-[18px]">
+          <div className="size-[58px] rounded-[17px] bg-[var(--header-grad)] flex items-center justify-center text-[var(--accent-ink)]">
             {Icon.diamond({ size: 30 })}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>
+          <div className="flex-1">
+            <div className="text-[22px] font-black text-text">
               VIP {app.vip.level} · {app.vip.name}
             </div>
-            <div
-              style={{ fontSize: 13, color: 'var(--text-dim)', fontWeight: 600 }}
-            >
+            <div className="text-[13px] text-[var(--text-dim)] font-semibold">
               {app.vip.points.toLocaleString()} / {app.vip.next.toLocaleString()}{' '}
               XP
             </div>
           </div>
         </div>
-        <div
-          style={{
-            height: 10,
-            borderRadius: 5,
-            background: 'var(--surface-2)',
-            overflow: 'hidden',
-            marginBottom: 6,
-          }}
-        >
+        <div className="h-[10px] rounded-[5px] bg-[var(--surface-2)] overflow-hidden mb-1.5">
           <div
             style={{
               width: pct + '%',
@@ -107,21 +72,12 @@ export function Vip() {
             }}
           />
         </div>
-        <div
-          style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 600 }}
-        >
+        <div className="text-xs text-[var(--text-mute)] font-semibold">
           {(app.vip.next - app.vip.points).toLocaleString()} XP to Diamond
         </div>
       </Card>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4,1fr)',
-          gap: 14,
-          marginBottom: 24,
-        }}
-      >
+      <div className="grid grid-cols-[repeat(4,1fr)] gap-3.5 mb-6">
         {(
           [
             ['Daily cashback', '0.8%', 'gift'],
@@ -131,19 +87,13 @@ export function Vip() {
           ] as const
         ).map((b, i) => (
           <Card key={i} pad={18}>
-            <div style={{ color: 'var(--accent-2)', marginBottom: 8 }}>
+            <div className="text-[var(--accent-2)] mb-2">
               {Icon[b[2]]?.({ size: 22 })}
             </div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text)' }}>
+            <div className="text-xl font-black text-text">
               {b[1]}
             </div>
-            <div
-              style={{
-                fontSize: 11.5,
-                color: 'var(--text-mute)',
-                fontWeight: 600,
-              }}
-            >
+            <div className="text-[11.5px] text-[var(--text-mute)] font-semibold">
               {b[0]}
             </div>
           </Card>
@@ -151,9 +101,7 @@ export function Vip() {
       </div>
 
       <H2>All tiers</H2>
-      <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14 }}
-      >
+      <div className="grid grid-cols-[repeat(5,1fr)] gap-3.5">
         {TIERS.map((t) => (
           <Card
             key={t[0]}
@@ -167,56 +115,28 @@ export function Vip() {
             }}
           >
             <div
+              className="size-11 rounded-[13px] mx-auto mb-2.5 flex items-center justify-center font-black text-base"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 13,
-                margin: '0 auto 10px',
                 background: `color-mix(in srgb,${t[4]} 22%,transparent)`,
                 color: t[4],
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: 16,
               }}
             >
               {t[0]}
             </div>
-            <div
-              style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text)' }}
-            >
+            <div className="text-[14.5px] font-extrabold text-text">
               {t[1]}
             </div>
-            <div
-              style={{
-                fontSize: 11.5,
-                color: 'var(--text-mute)',
-                fontWeight: 600,
-                marginTop: 3,
-              }}
-            >
+            <div className="text-[11.5px] text-[var(--text-mute)] font-semibold mt-[3px]">
               {t[2]} XP
             </div>
             <div
-              style={{
-                fontSize: 12.5,
-                fontWeight: 700,
-                color: t[4],
-                marginTop: 6,
-              }}
+              className="text-[12.5px] font-bold mt-1.5"
+              style={{ color: t[4] }}
             >
               {t[3]} cashback
             </div>
             {t[0] === app.vip.level && (
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: 'var(--accent)',
-                  marginTop: 8,
-                }}
-              >
+              <div className="text-[10px] font-extrabold text-[var(--accent)] mt-2">
                 CURRENT
               </div>
             )}

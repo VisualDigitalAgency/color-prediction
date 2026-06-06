@@ -15,20 +15,13 @@ import { Icon } from '@/components/icons/Icon';
 import { TxTable } from './TxTable';
 
 const Wrap = ({ children, w = 980 }: { children: React.ReactNode; w?: number }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div className="pt-6 px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
-  <div
-    style={{
-      fontSize: 16,
-      fontWeight: 800,
-      color: 'var(--text)',
-      margin: '4px 2px 14px',
-    }}
-  >
+  <div className="text-base font-extrabold text-text mt-1 mx-0.5 mb-3.5">
     {children}
   </div>
 );
@@ -46,35 +39,21 @@ export function Wallet() {
 
   return (
     <Wrap w={980}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <Card glow pad={24}>
-          <div style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 700 }}>
+          <div className="text-xs text-[var(--text-mute)] font-bold">
             TOTAL BALANCE
           </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 7,
-              margin: '6px 0 18px',
-            }}
-          >
+          <div className="flex items-baseline gap-[7px] mt-1.5 mb-[18px]">
             <CountUp
               value={fromMinor(app.totalBalance())}
               style={{ fontSize: 38, fontWeight: 900, color: 'var(--text)' }}
             />
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-dim)' }}>
+            <span className="text-[15px] font-bold text-[var(--text-dim)]">
               USDT
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="flex gap-2.5">
             <Button
               full
               size="lg"
@@ -95,25 +74,16 @@ export function Wallet() {
           </div>
         </Card>
 
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}
-        >
+        <div className="grid grid-cols-2 gap-4">
           {wallets.slice(0, 4).map((w, i) => (
             <Card key={i} pad={16}>
-              <div style={{ color: w[3], marginBottom: 8 }}>
+              <div style={{ color: w[3] }} className="mb-2">
                 {Icon[w[4] as keyof typeof Icon]?.({ size: 20 })}
               </div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: w[3] }}>
+              <div style={{ color: w[3] }} className="text-xl font-black">
                 {formatMoney(w[2])}
               </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-mute)',
-                  fontWeight: 600,
-                  marginTop: 2,
-                }}
-              >
+              <div className="text-[11px] text-[var(--text-mute)] font-semibold mt-0.5">
                 {w[0]}
               </div>
             </Card>

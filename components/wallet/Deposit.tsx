@@ -48,20 +48,13 @@ const NETWORKS: Network[] = [
 ];
 
 const Wrap = ({ children, w = 920 }: { children: React.ReactNode; w?: number }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div style={{ maxWidth: w }} className="pt-6 px-7 pb-12 mx-auto">
     {children}
   </div>
 );
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
-  <div
-    style={{
-      fontSize: 16,
-      fontWeight: 800,
-      color: 'var(--text)',
-      margin: '4px 2px 14px',
-    }}
-  >
+  <div className="text-base font-extrabold text-text mt-1 mx-0.5 mb-3.5">
     {children}
   </div>
 );
@@ -74,30 +67,16 @@ export function Deposit() {
 
   return (
     <Wrap w={920}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+      <div className="grid grid-cols-2 gap-[18px]">
         <div>
           <H2>Select network</H2>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
+          <div className="flex flex-col gap-2.5 mb-5">
             {NETWORKS.map((n) => (
               <button
                 key={n.k}
                 onClick={() => setNet(n)}
+                className="flex items-center gap-[13px] py-[15px] px-4 rounded-[var(--radius-sm)] cursor-pointer text-left"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 13,
-                  padding: '15px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  textAlign: 'left',
                   background:
                     net.k === n.k
                       ? 'color-mix(in srgb,var(--accent) 12%,var(--surface))'
@@ -106,42 +85,19 @@ export function Deposit() {
                     '1px solid ' + (net.k === n.k ? 'var(--accent)' : 'var(--border)'),
                 }}
               >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 11,
-                    background: 'var(--header-grad)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--accent-ink)',
-                  }}
-                >
+                <div className="size-[38px] rounded-[11px] bg-[var(--header-grad)] flex items-center justify-center text-[var(--accent-ink)]">
                   {Icon.coin({ size: 20 })}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 14.5,
-                      fontWeight: 700,
-                      color: 'var(--text)',
-                    }}
-                  >
+                <div className="flex-1">
+                  <div className="text-[14.5px] font-bold text-text">
                     {n.label}
                   </div>
-                  <div
-                    style={{
-                      fontSize: 11.5,
-                      color: 'var(--text-mute)',
-                      fontWeight: 600,
-                    }}
-                  >
+                  <div className="text-[11.5px] text-[var(--text-mute)] font-semibold">
                     Network fee: {n.fee}
                   </div>
                 </div>
                 {net.k === n.k && (
-                  <div style={{ color: 'var(--accent)' }}>
+                  <div className="text-[var(--accent)]">
                     {Icon.check({ size: 20 })}
                   </div>
                 )}
@@ -150,24 +106,12 @@ export function Deposit() {
           </div>
 
           <H2>Quick simulate (demo)</H2>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          <div className="flex gap-2.5 mb-4">
             {[50, 100, 500, 1000].map((v) => (
               <button
                 key={v}
                 onClick={() => setAmt(v)}
-                style={{
-                  flex: 1,
-                  padding: '13px 0',
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: 14,
-                  fontWeight: 800,
-                  background: amt === v ? 'var(--accent)' : 'var(--surface-2)',
-                  color: amt === v ? 'var(--accent-ink)' : 'var(--text-dim)',
-                  border:
-                    '1px solid ' + (amt === v ? 'transparent' : 'var(--border)'),
-                }}
+                className={`flex-1 py-[13px] rounded-[10px] cursor-pointer text-sm font-extrabold border ${amt === v ? 'bg-[var(--accent)] text-[var(--accent-ink)] border-transparent' : 'bg-[var(--surface-2)] text-[var(--text-dim)] border-[var(--border)]'}`}
               >
                 {v}
               </button>
@@ -187,40 +131,14 @@ export function Deposit() {
         </div>
 
         <Card pad={26} style={{ textAlign: 'center' }}>
-          <div style={{ display: 'inline-block' }}>
+          <div className="inline-block">
             <QR data={net.addr} />
           </div>
-          <div
-            style={{
-              fontSize: 11.5,
-              color: 'var(--text-mute)',
-              fontWeight: 700,
-              margin: '16px 0 8px',
-            }}
-          >
+          <div className="text-[11.5px] text-[var(--text-mute)] font-bold mt-4 mb-2">
             DEPOSIT ADDRESS · {net.label}
           </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              padding: '12px 14px',
-            }}
-          >
-            <span
-              style={{
-                flex: 1,
-                fontSize: 12,
-                color: 'var(--text)',
-                fontFamily: 'monospace',
-                wordBreak: 'break-all',
-                textAlign: 'left',
-              }}
-            >
+          <div className="flex items-center gap-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl py-3 px-3.5">
+            <span className="flex-1 text-xs text-text font-mono break-all text-left">
               {net.addr}
             </span>
             <button
@@ -229,30 +147,12 @@ export function Deposit() {
                   navigator.clipboard?.writeText(net.addr);
                 app.pushToast('Address copied', 'success');
               }}
-              style={{
-                background: 'var(--accent)',
-                color: 'var(--accent-ink)',
-                border: 'none',
-                borderRadius: 9,
-                padding: '9px 11px',
-                cursor: 'pointer',
-              }}
+              className="bg-[var(--accent)] text-[var(--accent-ink)] border-0 rounded-[9px] py-[9px] px-[11px] cursor-pointer"
             >
               {Icon.copy({ size: 16 })}
             </button>
           </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--green)',
-              fontWeight: 700,
-              marginTop: 16,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
-          >
+          <div className="text-xs text-green font-bold mt-4 flex items-center justify-center gap-1.5">
             {Icon.gift({ size: 14 })}
             First deposit +200% bonus applies
           </div>

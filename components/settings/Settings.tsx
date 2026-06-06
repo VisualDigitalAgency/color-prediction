@@ -22,7 +22,7 @@ const THEME_IDS: ThemeId[] = ['neon', 'fintech', 'cyber'];
 
 function Wrap({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ padding: '24px 28px 48px', maxWidth: 760, margin: '0 auto' }}>
+    <div className="pt-6 px-7 pb-12 mx-auto max-w-[760px]">
       {children}
     </div>
   );
@@ -30,16 +30,7 @@ function Wrap({ children }: { children: React.ReactNode }) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        fontSize: 11,
-        fontWeight: 800,
-        letterSpacing: '0.09em',
-        color: 'var(--text-mute)',
-        textTransform: 'uppercase' as const,
-        marginBottom: 12,
-      }}
-    >
+    <div className="text-[11px] font-extrabold tracking-[0.09em] text-[var(--text-mute)] uppercase mb-3">
       {children}
     </div>
   );
@@ -60,28 +51,15 @@ function Toggle({ on, onChange, label }: ToggleProps) {
       aria-checked={on}
       aria-label={label}
       onClick={() => onChange(!on)}
+      className="w-11 h-[26px] rounded-[13px] border-0 cursor-pointer p-1 flex items-center shrink-0 outline-none"
       style={{
-        width: 44,
-        height: 26,
-        borderRadius: 13,
         background: on ? 'var(--accent)' : 'var(--surface-3)',
-        border: 'none',
-        cursor: 'pointer',
-        padding: 4,
-        display: 'flex',
-        alignItems: 'center',
         justifyContent: on ? 'flex-end' : 'flex-start',
-        flexShrink: 0,
-        outline: 'none',
       }}
     >
       <div
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: 9,
-          background: on ? 'var(--accent-ink)' : 'var(--text-mute)',
-        }}
+        className="size-[18px] rounded-[9px]"
+        style={{ background: on ? 'var(--accent-ink)' : 'var(--text-mute)' }}
       />
     </button>
   );
@@ -100,42 +78,18 @@ interface SettingRowProps {
 function SettingRow({ label, desc, icon, control, divider = false }: SettingRowProps) {
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '14px 16px',
-        borderBottom: divider ? '1px solid var(--border)' : 'none',
-      }}
+      className="flex items-center gap-3.5 py-3.5 px-4"
+      style={{ borderBottom: divider ? '1px solid var(--border)' : 'none' }}
     >
-      <div
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 11,
-          background: 'var(--surface-2)',
-          color: 'var(--accent-2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
+      <div className="size-[38px] rounded-[11px] bg-[var(--surface-2)] text-[var(--accent-2)] flex items-center justify-center shrink-0">
         {icon}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>
+      <div className="flex-1">
+        <div className="text-[14.5px] font-bold text-text">
           {label}
         </div>
         {desc && (
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--text-mute)',
-              fontWeight: 600,
-              marginTop: 2,
-            }}
-          >
+          <div className="text-xs text-[var(--text-mute)] font-semibold mt-0.5">
             {desc}
           </div>
         )}
@@ -169,22 +123,16 @@ function ThemeCard({ id, active, onClick }: ThemeCardProps) {
       onClick={onClick}
       aria-pressed={active}
       aria-label={`${theme.label} theme`}
+      className="rounded-[var(--radius)] pt-4 px-3.5 pb-3.5 cursor-pointer text-left outline-none relative"
       style={{
         background: theme.screen,
         border: `2px solid ${active ? accent : 'transparent'}`,
-        borderRadius: 'var(--radius)',
-        padding: '16px 14px 14px',
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        textAlign: 'left',
-        outline: 'none',
         boxShadow: active ? `0 0 18px ${accent}55, var(--card-shadow)` : 'var(--card-shadow)',
-        position: 'relative',
         minHeight: 88,
       }}
     >
       {/* Mini palette swatches */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+      <div className="flex gap-1.5 mb-3">
         {swatches.map((color, i) => (
           <div
             key={i}
@@ -199,7 +147,7 @@ function ThemeCard({ id, active, onClick }: ThemeCardProps) {
       </div>
 
       {active && (
-        <div style={{ position: 'absolute', top: 10, right: 10 }}>
+        <div className="absolute top-2.5 right-2.5">
           {Icon.check({ size: 18, color: accent })}
         </div>
       )}
@@ -223,14 +171,7 @@ export function Settings() {
     <Wrap>
       {/* ── Theme picker ──────────────────────────────── */}
       <SectionLabel>{STRINGS.settings.themeLabel}</SectionLabel>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 14,
-          marginBottom: 28,
-        }}
-      >
+      <div className="grid grid-cols-3 gap-3.5 mb-7">
         {THEME_IDS.map((id) => (
           <ThemeCard
             key={id}
