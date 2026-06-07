@@ -16,6 +16,16 @@ Chronological, lightweight log of decisions as they're made. Formal ones graduat
 - **Dropped from prototype:** mock Chrome frame, Tweaks panel, `Stage`/`WebFrame`/`WebApp`,
   native mobile flavor.
 
+## 2026-06-07
+- **Phase 2 backend stack locked: Supabase.** PostgreSQL (hosted, Supavisor connection pooling) +
+  Supabase Auth (OTP phone/email built-in — no Twilio integration needed) + Row-Level Security
+  (replaces hand-rolled auth guards on API routes) + Realtime (replaces SSE polling for settlement
+  push) + Storage (KYC document bucket). Hosting: Vercel (Next.js) + Supabase (all backend services).
+  ORM: Drizzle (TypeScript-first, schema = source of truth). Full plan in `docs/PHASE2-PLAN.md`.
+- **Phase 2 dependency order:** M1 (Supabase + DB + Auth) → M2 (SupabaseRepository) →
+  M3a (server settlement + Realtime) ∥ M3b (commit-reveal) → M4 (withdrawal + KYC) → M5 (hardening).
+  M4 provider onboarding (NOWPayments + Sumsub) has 2–4 week approval lead time — start immediately.
+
 ## 2026-06-06
 - **Pass B (Step 11) inline-style policy:** Keep `style={{}}` only for values that are computed
   at render time: state-driven conditional expressions, `color-mix()` / `conic-gradient()` calls

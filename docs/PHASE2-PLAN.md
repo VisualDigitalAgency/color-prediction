@@ -1,6 +1,7 @@
 # AuraWin — Phase 2 Action Plan
 
 > **Prepared:** 2026-06-07  
+> **Updated:** 2026-06-07 — Backend stack locked: **Supabase** (PostgreSQL + Auth)  
 > **Status:** Phase 1 complete (198 tests passing, all 12 screens ported). Phase 2 begins here.  
 > **Branch convention:** one feature branch per epic, PR into `main` per milestone.
 
@@ -10,9 +11,16 @@
 
 Phase 1 delivered a pixel-perfect, fully-functional demo frontend with localStorage. Every mutation
 is already async and routes through the `DataRepository` interface — the seam was designed for this
-swap. Phase 2 replaces the local backend with a real one: REST API, database, OTP auth, and
-server-authoritative settlement. No structural rewrites are needed on the frontend; only adapters,
-new API routes, and business-logic additions.
+swap. Phase 2 replaces the local backend with Supabase: managed PostgreSQL, built-in OTP auth,
+Row-Level Security (RLS), and Realtime push — all under one platform, no custom auth plumbing.
+
+**Supabase advantages for this project:**
+- OTP auth (phone SMS + email magic link) is built-in — no Twilio/Resend integration needed
+- JWT sessions managed automatically by `@supabase/ssr` in Next.js App Router
+- Row-Level Security enforces `auth.uid() = user_id` at the DB layer — no hand-rolled guards
+- Realtime subscriptions replace the SSE/polling option for settlement push
+- Storage bucket for KYC document uploads (avoids a separate S3 setup)
+- Supabase Edge Functions for cron-based settlement (runs on Deno, serverless)
 
 **Hard gates before any real-money launch** (regulatory, not optional):
 
@@ -27,589 +35,621 @@ new API routes, and business-logic additions.
 
 ## Dependency DAG
 
-Phase 2 has strict ordering. Steps within a milestone can be parallelised; milestones cannot.
+M1 + M2 now collapse into one milestone because Supabase provides both DB and Auth together.
 
 ```
-M1: Infrastructure & DB schema
-  └─ M2: Auth (OTP + JWT)
-       └─ M3: RestRepository (replaces LocalStorageRepository)
-            ├─ M4a: Server-authoritative settlement (parallel with M4b)
-            ├─ M4b: Commit-reveal fairness engine  (parallel with M4a)
-            └─ M5: Withdrawal & KYC integration
-                 └─ M6: Observability, compliance & launch hardening
+M1: Supabase project + DB schema + Auth (OTP)
+     └─ M2: SupabaseRepository (replaces LocalStorageRepository)
+          ├─ M3a: Server-authoritative settlement + Realtime push  (parallel with M3b)
+          ├─ M3b: Commit-reveal fairness engine                    (parallel with M3a)
+          └─ M4: Withdrawal & KYC integration
+               └─ M5: Observability, compliance & launch hardening
 ```
 
 ---
 
-## Milestone 1 — Infrastructure & database schema
+## Milestone 1 — Supabase project, DB schema & Auth
 
 ### Goal
-A running API server (Next.js API routes) backed by a PostgreSQL database, with a schema that
-mirrors the existing TypeScript types exactly — no shape changes at the client.
+Provision a Supabase project, mirror the existing TypeScript types into a PostgreSQL schema,
+enable OTP auth (phone + email), and wire `@supabase/ssr` into the Next.js App Router so
+every route has a verified session.
 
-### Tech choices
+### Tech stack (locked)
 
-| Concern | Recommendation | Reason |
+| Concern | Tool | Notes |
 |---|---|---|
-| Database | **PostgreSQL 16** | Reliable, ACID, integer arithmetic for money, good ORM support |
-| ORM | **Drizzle ORM** | TypeScript-first, schema = source of truth, migrations are plain SQL, zero magic |
-| API layer | **Next.js Route Handlers** (`app/api/**`) | Already in the stack; no extra server needed for Phase 1→2 |
-| Money column type | `integer` (minor-units) | Matches existing `lib/money.ts` invariant, no decimal precision bugs |
-| Session storage | **PostgreSQL** (`sessions` table) | Keeps infra simple; Redis optional for scale-out |
-| Hosting | **Neon** (serverless Postgres) or **Supabase** | Connects natively to Vercel; auto-suspend on idle |
+| Database | **Supabase PostgreSQL** | Managed, auto-backups, connection pooling via Supavisor |
+| ORM / migrations | **Drizzle ORM** | TypeScript-first; migrations are plain SQL; works alongside Supabase native migrations |
+| Auth | **Supabase Auth** | Phone OTP (SMS via Supabase's Twilio integration) + email magic link — zero custom code |
+| Session management | **`@supabase/ssr`** | Handles cookie-based sessions in Next.js App Router (server + client components) |
+| Authorization | **Row-Level Security (RLS)** | `auth.uid() = user_id` policies; no hand-rolled guards in API routes |
+| Hosting | **Vercel + Supabase** | Vercel for Next.js; Supabase for all backend services |
+| Money columns | `integer` (minor-units) | Matches `lib/money.ts` invariant exactly; no DECIMAL precision bugs |
 
 ### Schema (mirrors existing TypeScript types)
 
 ```sql
--- Users
-CREATE TABLE users (
-  id          TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  phone       TEXT UNIQUE,           -- OTP target
-  email       TEXT UNIQUE,
-  created_at  BIGINT NOT NULL,        -- unix ms
-  updated_at  BIGINT NOT NULL
-);
-
--- Sessions
-CREATE TABLE sessions (
-  id          TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  token_hash  TEXT NOT NULL,          -- SHA-256 of the JWT; revocable
-  expires_at  BIGINT NOT NULL,
+-- Users (managed by Supabase Auth — extends auth.users)
+CREATE TABLE public.profiles (
+  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  phone       TEXT,
   created_at  BIGINT NOT NULL
 );
 
 -- Wallets (one row per user)
-CREATE TABLE wallets (
-  user_id     TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  main        INTEGER NOT NULL DEFAULT 0,       -- minor-units
-  bonus       INTEGER NOT NULL DEFAULT 0,
-  winning     INTEGER NOT NULL DEFAULT 0,
-  referral    INTEGER NOT NULL DEFAULT 0,
-  updated_at  BIGINT NOT NULL
+CREATE TABLE public.wallets (
+  user_id     UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  main        INTEGER NOT NULL DEFAULT 128450,   -- minor-units; seed = 1284.50 USDT
+  bonus       INTEGER NOT NULL DEFAULT 3600,
+  winning     INTEGER NOT NULL DEFAULT 41275,
+  referral    INTEGER NOT NULL DEFAULT 8820,
+  updated_at  BIGINT NOT NULL DEFAULT extract(epoch FROM now()) * 1000
 );
 
 -- Bets
-CREATE TABLE bets (
+CREATE TABLE public.bets (
   id          TEXT PRIMARY KEY,
-  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  mode        INTEGER NOT NULL,         -- 30|60|180|300
-  kind        TEXT NOT NULL,            -- 'color'|'size'|'number'
+  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  mode        INTEGER NOT NULL,           -- 30|60|180|300
+  kind        TEXT NOT NULL,             -- 'color'|'size'|'number'
   pick        TEXT NOT NULL,
-  stake       INTEGER NOT NULL,         -- minor-units
+  stake       INTEGER NOT NULL,          -- minor-units
   period_idx  BIGINT NOT NULL,
   period_id   TEXT NOT NULL,
   status      TEXT NOT NULL DEFAULT 'pending',   -- 'pending'|'won'|'lost'
-  payout      INTEGER,                  -- null until settled; minor-units
+  payout      INTEGER,                   -- null until settled
   created_at  BIGINT NOT NULL,
   settled_at  BIGINT
 );
 
 -- Transactions
-CREATE TABLE transactions (
+CREATE TABLE public.transactions (
   id          TEXT PRIMARY KEY,
-  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type        TEXT NOT NULL,   -- 'bet'|'win'|'deposit'|'withdraw'|'bonus'
   method      TEXT NOT NULL,
   amt         INTEGER NOT NULL,
   dir         INTEGER NOT NULL CHECK (dir IN (-1, 1)),
   status      TEXT NOT NULL,
+  tx_hash     TEXT,            -- on-chain hash (withdrawals only)
   created_at  BIGINT NOT NULL
 );
 
 -- Settings
-CREATE TABLE settings (
-  user_id         TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  theme           TEXT NOT NULL DEFAULT 'neon',
-  reduced_motion  BOOLEAN NOT NULL DEFAULT FALSE,
-  color_blind_cue BOOLEAN NOT NULL DEFAULT FALSE
+CREATE TABLE public.settings (
+  user_id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  theme            TEXT NOT NULL DEFAULT 'neon',
+  reduced_motion   BOOLEAN NOT NULL DEFAULT FALSE,
+  color_blind_cue  BOOLEAN NOT NULL DEFAULT FALSE,
+  age_confirmed    BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- VIP
-CREATE TABLE vip (
-  user_id    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE public.vip (
+  user_id    UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   vip_level  INTEGER NOT NULL DEFAULT 0,
   xp         INTEGER NOT NULL DEFAULT 0
 );
 ```
 
-### Deliverables
+### Row-Level Security policies
 
-- [ ] `lib/db/schema.ts` — Drizzle schema (mirrors TypeScript types 1:1)
-- [ ] `lib/db/client.ts` — Neon/pg connection singleton (SSR-safe)
-- [ ] `drizzle/` migrations — initial migration from schema
-- [ ] `.env.example` — `DATABASE_URL`, `JWT_SECRET`, `OTP_*` keys
-- [ ] `drizzle.config.ts` — migration config
-- [ ] CI: `npm run db:migrate` in GitHub Actions on deploy
+```sql
+-- Enable RLS on all tables
+ALTER TABLE public.wallets     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bets        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.settings    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vip         ENABLE ROW LEVEL SECURITY;
 
-**Estimated complexity:** Medium. Schema is already defined in TypeScript; Drizzle schema
-is a mechanical translation.
+-- Users can only see and modify their own rows
+CREATE POLICY "own rows only" ON public.wallets     USING (auth.uid() = user_id);
+CREATE POLICY "own rows only" ON public.bets        USING (auth.uid() = user_id);
+CREATE POLICY "own rows only" ON public.transactions USING (auth.uid() = user_id);
+CREATE POLICY "own rows only" ON public.settings    USING (auth.uid() = user_id);
+CREATE POLICY "own rows only" ON public.vip         USING (auth.uid() = user_id);
 
----
-
-## Milestone 2 — Authentication (OTP + JWT)
-
-### Goal
-Replace the simulated `AuthModal` (any input accepted) with a real OTP-based login
-that issues a signed JWT session the client stores and sends on every API call.
-
-### Flow
-
-```
-User enters phone/email
-  → POST /api/auth/otp/send   { target, type }
-  → OTP provider sends 6-digit code
-  → User enters code
-  → POST /api/auth/otp/verify { target, code }
-  → Server: verify code, upsert user, create session, sign JWT
-  → Response: { token, expiresAt } (httpOnly cookie preferred)
-  → Client: store authed=true + user in Zustand (NOT the JWT — stays in cookie)
+-- Wallet mutations must go through server-side functions (service role only)
+CREATE POLICY "server writes only" ON public.wallets FOR UPDATE
+  USING (auth.role() = 'service_role');
 ```
 
-### Tech choices
-
-| Concern | Recommendation |
-|---|---|
-| OTP provider | **Twilio Verify** (SMS/WhatsApp) or **Resend** (email OTP) |
-| JWT library | `jose` (Web Crypto API, edge-compatible, used by NextAuth) |
-| Token storage | `httpOnly` `Secure` cookie (no XSS risk vs localStorage) |
-| Session revocation | `sessions` table `token_hash` — DELETE row to revoke |
-| Token expiry | 7-day refresh + 15-min access token (standard pattern) |
-
-### API routes
+### Supabase Auth setup
 
 ```
-POST   /api/auth/otp/send     { target: string, type: 'sms'|'email' }
-POST   /api/auth/otp/verify   { target: string, code: string }
-POST   /api/auth/session/refresh
-DELETE /api/auth/session       (logout)
-GET    /api/auth/me            (validate session, return User)
+Supabase Dashboard → Authentication → Providers:
+  ✅ Phone (SMS OTP via Supabase's built-in Twilio connection)
+  ✅ Email (magic link / OTP)
+
+OTP flow (replaces simulated AuthModal):
+  1. User enters phone/email → supabase.auth.signInWithOtp({ phone })
+  2. Supabase sends 6-digit code
+  3. User enters code → supabase.auth.verifyOtp({ phone, token, type: 'sms' })
+  4. Session cookie set automatically by @supabase/ssr
+  5. AuthModal reads auth.user → sets authed=true in Zustand store
 ```
 
-### Frontend changes
-
-- `components/auth/AuthModal.tsx` — wire to real API (same UI, different action)
-- `components/shell/AgeGate.tsx` — server-authoritative check: session claim
-  `ageConfirmed: true` set at OTP verification time, not client checkbox
-- Route middleware (`middleware.ts`) — validate session cookie; redirect to `/` if invalid
-
-### Deliverables
-
-- [ ] `app/api/auth/**` — Route Handlers (send, verify, refresh, logout, me)
-- [ ] `lib/auth/otp.ts` — OTP provider adapter (Twilio or Resend)
-- [ ] `lib/auth/jwt.ts` — sign/verify helpers (`jose`)
-- [ ] `lib/auth/session.ts` — session DB operations (create, revoke, validate)
-- [ ] `middleware.ts` — session validation on `(app)` routes
-- [ ] Update `AuthModal.tsx` — POST to real endpoints, handle errors
-- [ ] Update `AgeGate.tsx` — read from session claim, not local checkbox
-- [ ] Tests: `lib/auth/*.test.ts` (mock OTP provider)
-
-**Estimated complexity:** Medium-high. OTP flow is standard; the seam is clean (AuthModal
-already abstracts the detail). JWT/cookie plumbing is boilerplate.
-
----
-
-## Milestone 3 — RestRepository (replace LocalStorageRepository)
-
-### Goal
-Implement `RestRepository` that satisfies the existing `DataRepository` interface using
-real API calls. Swap it in for `LocalStorageRepository` via dependency injection — zero
-changes to the store or any component.
-
-### DataRepository interface (already exists in `types/index.ts`)
+### Next.js wiring (`@supabase/ssr`)
 
 ```typescript
-interface DataRepository {
-  loadState(): Promise<PersistedState | null>;
-  saveState(s: PersistedState): Promise<void>;
-  placeBet(input: PlaceBetInput): Promise<Bet>;
-  createDeposit(input: DepositInput): Promise<Transaction>;
-  createWithdrawal(input: WithdrawInput): Promise<Transaction>;
-  listTransactions(): Promise<Transaction[]>;
-  listBets(): Promise<Bet[]>;
-  getSetting<K extends keyof Settings>(k: K): Promise<Settings[K] | undefined>;
-  setSetting<K extends keyof Settings>(k: K, v: Settings[K]): Promise<void>;
+// lib/supabase/server.ts — for Server Components, Route Handlers, middleware
+import { createServerClient } from '@supabase/ssr';
+export function createSupabaseServer() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { /* Next.js cookies() adapter */ } }
+  );
+}
+
+// lib/supabase/client.ts — for Client Components
+import { createBrowserClient } from '@supabase/ssr';
+export function createSupabaseClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+// middleware.ts — session refresh on every request
+export async function middleware(req: NextRequest) {
+  const supabase = createSupabaseServer();
+  await supabase.auth.getUser();  // refreshes cookie if needed
+  // redirect to '/' if no valid session and route is in (app)/
 }
 ```
 
-### API routes (mirror DataRepository methods 1:1)
+### Age-gate update
+Set `age_confirmed = true` in `public.settings` at OTP verification time (server-side).
+`AgeGate.tsx` reads from the Supabase session claim — no client checkbox bypasses this.
+
+### Deliverables
+
+- [ ] Supabase project provisioned (production + dev environments)
+- [ ] `lib/db/schema.ts` — Drizzle schema mirroring types above
+- [ ] `drizzle/` migrations — initial migration + RLS policies
+- [ ] `lib/supabase/server.ts` + `lib/supabase/client.ts` — SSR-safe client factories
+- [ ] `middleware.ts` — session refresh + auth guard for `(app)/` routes
+- [ ] `.env.example` — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- [ ] `components/auth/AuthModal.tsx` — wire to `supabase.auth.signInWithOtp()` / `verifyOtp()`
+- [ ] `components/shell/AgeGate.tsx` — read from session; set in settings table on first confirm
+- [ ] Tests: auth flow mocked with `@supabase/supabase-js` mock client
+
+**Estimated complexity:** Medium. Supabase handles the hard parts (OTP, JWT, session refresh). The
+wiring is mostly plumbing: schema + RLS + client factories + updating AuthModal.
+
+---
+
+## Milestone 2 — SupabaseRepository (replaces LocalStorageRepository)
+
+### Goal
+Implement `SupabaseRepository` that satisfies the existing `DataRepository` interface using the
+Supabase client. Swap it in via the factory function — zero changes to the store or any component.
+
+### Architecture: two-tier approach
+
+Simple reads (wallet balance, settings, bet history) go **directly from the client to Supabase**
+via RLS-protected queries. Complex mutations (place bet, withdraw) go through **Next.js API routes**
+which use the service-role key to bypass RLS and apply business logic atomically.
 
 ```
-GET    /api/state                     → loadState()
-POST   /api/state                     body: PersistedState → saveState()
-POST   /api/bets                      body: PlaceBetInput → placeBet()
-POST   /api/transactions/deposit      body: DepositInput → createDeposit()
-POST   /api/transactions/withdraw     body: WithdrawInput → createWithdrawal()
-GET    /api/transactions              → listTransactions()
-GET    /api/bets                      → listBets()
-GET    /api/settings/:key             → getSetting()
-PUT    /api/settings/:key             body: value → setSetting()
+Simple reads:    Client → Supabase (anon key, RLS enforced)
+Complex writes:  Client → Next.js API Route → Supabase (service role, atomic tx)
 ```
 
-### RestRepository implementation pattern
+### SupabaseRepository implementation pattern
 
 ```typescript
-export class RestRepository implements DataRepository {
-  private async request<T>(path: string, opts?: RequestInit): Promise<T> {
-    const res = await fetch(`/api${path}`, {
-      ...opts,
-      headers: { 'Content-Type': 'application/json', ...opts?.headers },
-      credentials: 'include',         // sends httpOnly session cookie
-    });
-    if (!res.ok) throw new ApiError(res.status, await res.text());
-    return res.json() as Promise<T>;
+// lib/persistence/SupabaseRepository.ts
+export class SupabaseRepository implements DataRepository {
+  constructor(private supabase: SupabaseClient) {}
+
+  async loadState(): Promise<PersistedState | null> {
+    const userId = (await this.supabase.auth.getUser()).data.user?.id;
+    if (!userId) return null;
+
+    const [wallet, bets, tx, settings, vip] = await Promise.all([
+      this.supabase.from('wallets').select('*').eq('user_id', userId).single(),
+      this.supabase.from('bets').select('*').order('created_at', { ascending: false }).limit(100),
+      this.supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(200),
+      this.supabase.from('settings').select('*').eq('user_id', userId).single(),
+      this.supabase.from('vip').select('*').eq('user_id', userId).single(),
+    ]);
+
+    return buildPersistedState({ wallet, bets, tx, settings, vip });
   }
 
-  loadState() { return this.request<PersistedState | null>('/state'); }
-  placeBet(input: PlaceBetInput) { return this.request<Bet>('/bets', { method: 'POST', body: JSON.stringify(input) }); }
-  // ... other methods follow same pattern
+  // Bet placement → API route (validates balance + atomicity server-side)
+  async placeBet(input: PlaceBetInput): Promise<Bet> {
+    const res = await fetch('/api/bets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new ApiError(res.status, await res.text());
+    return res.json();
+  }
+
+  // Settings → direct Supabase upsert (RLS-safe, no business logic)
+  async setSetting<K extends keyof Settings>(k: K, v: Settings[K]): Promise<void> {
+    await this.supabase
+      .from('settings')
+      .upsert({ user_id: (await this.supabase.auth.getUser()).data.user!.id, [k]: v });
+  }
+
+  // ... other methods follow same two-tier pattern
 }
 ```
 
-### Dependency injection (swap point)
+### Dependency injection (swap point — no store changes needed)
 
 ```typescript
 // lib/persistence/index.ts
-export function createRepository(): DataRepository {
-  if (typeof window === 'undefined') return new NullRepository(); // SSR
-  if (process.env.NEXT_PUBLIC_API_MODE === 'rest') return new RestRepository();
-  return new LocalStorageRepository(); // Phase 1 fallback / dev
+export function createRepository(supabase?: SupabaseClient): DataRepository {
+  if (typeof window === 'undefined') return new NullRepository();
+  if (supabase) return new SupabaseRepository(supabase);
+  return new LocalStorageRepository();  // dev fallback / Phase-1 mode
 }
 ```
 
-### Optimistic UI + reconciliation
-
-This is the Phase-2 authority shift (ADR 0005). The store already fires async actions:
+### Optimistic UI + reconciliation (ADR 0005 Phase 2)
 
 ```
 User clicks "Place Bet"
-  → store.placeBet() optimistically updates UI (deduct stake)
-  → RestRepository.placeBet() POSTs to server
-  → Server validates balance, places bet, returns canonical Bet
+  → store.placeBet(): optimistically deduct stake, add pending bet to UI
+  → SupabaseRepository.placeBet(): POST /api/bets
+  → API route: validate balance (service role read) → insert bet → deduct wallet (atomic tx)
+  → Returns canonical Bet object
   → store reconciles: replace optimistic bet with server version
-  → If server rejects: rollback (re-credit stake), show toast
+  → If 409 (insufficient balance) or 422 (invalid input): rollback + toast
 ```
 
-Reconciliation requires:
-- `rollback` action in the store (already has the right async shape)
-- Server 409/422 responses for invalid bets (insufficient balance, invalid mode)
-- Client-side balance floor (never show negative; optimistic deduct capped at balance)
+### API routes (for complex mutations only)
+
+```
+POST  /api/bets                     → placeBet() — validates balance, inserts bet + debit tx atomically
+POST  /api/transactions/deposit     → createDeposit() — credits main wallet
+POST  /api/transactions/withdraw    → createWithdrawal() — validates KYC, calls payment processor
+```
 
 ### Deliverables
 
-- [ ] `lib/persistence/RestRepository.ts` — implements DataRepository
-- [ ] `lib/persistence/NullRepository.ts` — no-op SSR stub
-- [ ] `lib/persistence/index.ts` — updated factory (env-gated injection)
-- [ ] `lib/persistence/ApiError.ts` — typed error with status + body
-- [ ] `app/api/state/route.ts`
-- [ ] `app/api/bets/route.ts`
-- [ ] `app/api/transactions/route.ts`
-- [ ] `app/api/settings/[key]/route.ts`
-- [ ] Store rollback action (`lib/store/store.ts`)
-- [ ] Tests: `lib/persistence/RestRepository.test.ts` (MSW mocks)
+- [ ] `lib/persistence/SupabaseRepository.ts` — implements DataRepository
+- [ ] `lib/persistence/NullRepository.ts` — SSR stub (no-op, server render)
+- [ ] `lib/persistence/ApiError.ts` — typed error (status + body)
+- [ ] `lib/persistence/index.ts` — updated factory (Supabase injection)
+- [ ] `app/api/bets/route.ts` — place bet, atomic balance deduction
+- [ ] `app/api/transactions/deposit/route.ts`
+- [ ] `app/api/transactions/withdraw/route.ts` (placeholder; KYC gate added in M4)
+- [ ] Store: `rollback(betId)` action for failed placements
+- [ ] Tests: `SupabaseRepository.test.ts` (mock `@supabase/supabase-js`)
+- [ ] Tests: API routes with mock service-role client
 
-**Estimated complexity:** Medium. The interface is already defined; this is plumbing work.
-The optimistic-UI reconciliation is the only non-trivial piece.
+**Estimated complexity:** Medium. The interface exists; this is plumbing + Supabase client wiring.
 
 ---
 
-## Milestone 4a — Server-authoritative settlement
+## Milestone 3a — Server-authoritative settlement + Realtime push
 
 ### Goal
-Move bet settlement from the client-side `setNow()` tick to a server process. The server
-becomes the source of truth for round results and payouts.
+Move bet settlement from the client-side 250ms tick to a Supabase Edge Function (cron).
+Results are pushed to connected clients via **Supabase Realtime** — no polling needed.
 
-### Current flow (Phase 1 — client authoritative)
-
-```
-useNow() tick (250ms)
-  → store.setNow(now)
-  → for each pending bet whose period has rolled over:
-       result = resultForPeriod(bet.mode, bet.periodIdx)  ← pure engine, client-side
-       if betWins(bet, result): credit winning wallet, emit celebration
-```
-
-### Phase 2 flow (server authoritative)
+### Settlement flow
 
 ```
-useNow() tick (250ms) — UI only (timer display, period ID)
+Supabase Edge Function (cron — runs at each period boundary for each mode):
+  1. SELECT pending bets WHERE period_idx < current_period_idx
+  2. Compute result: resultForPeriod(mode, periodIdx)  ← same lib/fair/engine.ts (Deno-compatible)
+  3. UPDATE bets SET status, payout, settled_at
+  4. UPDATE wallets.winning += payout  (atomic, service role)
+  5. INSERT win transactions
+  6. Supabase Realtime broadcasts the change automatically (bets table subscription)
 
-Server settlement job (runs at each period boundary):
-  → Query all pending bets for the period
-  → Compute result (same pure engine, now server-side)
-  → Update bets.status, bets.payout
-  → Credit wallets (wallets.winning += payout)
-  → Write win transactions
-
-Client reconciliation:
-  → WebSocket push OR polling on period boundary
-  → store.onSettlement(settledBets) reconciles client state
-  → celebration emitted if any bet won
+Client (store):
+  supabase.channel('bets')
+    .on('postgres_changes', { event: 'UPDATE', table: 'bets' }, (payload) => {
+      store.onSettlement(payload.new as Bet);  // reconcile + emit celebration if won
+    })
+    .subscribe();
 ```
 
-### Implementation options
+### lib/fair/engine.ts in Deno (Edge Function)
+The engine is already zero-dependency pure TypeScript — no changes needed. Import directly:
 
-| Option | Mechanism | Complexity | Latency |
-|---|---|---|---|
-| A — Polling | Client polls `/api/bets?status=pending` after each period | Low | ~1s lag |
-| B — Server-Sent Events | `/api/sse/settlements` pushes settled round | Medium | <200ms |
-| C — WebSocket | Bidirectional; push settlements, also used for chat/live odds | High | <50ms |
-
-**Recommendation:** Start with **Option A (polling)** in Phase 2.0 — it's simple, requires
-no new infrastructure, and the DataRepository interface already supports it. Upgrade to
-Option B (SSE) in Phase 2.1 when live round feel becomes a priority.
-
-### Settlement API route
-
-```
-GET /api/settlements?mode=30&periodIdx=N
-→ Returns: { result: RoundResult, settledBets: Bet[] }
+```typescript
+// supabase/functions/settle-period/index.ts
+import { resultForPeriod, betWins, payoutMult } from '../../lib/fair/engine.ts';
 ```
 
-The server uses the same `lib/fair/engine.ts` functions (zero-dependency pure functions,
-importable in any Next.js Route Handler).
+Supabase Edge Functions run Deno, which handles TypeScript natively and can import local files.
+
+### Cron configuration
+
+```toml
+# supabase/functions/settle-period/cron.toml
+[cron]
+schedule = "* * * * *"   # every minute — handles 60s, 180s, 300s modes
+# 30s mode needs more granularity; use pg_cron at 30s intervals
+```
+
+For 30-second mode: use `pg_cron` extension (available in Supabase) to run every 30 seconds.
+
+### Store additions
+
+```typescript
+// Realtime subscription (set up in useApp or store hydration)
+const onSettlement = (bet: Bet) => {
+  // Update bet status in store
+  // If won: emit celebration, credit winning wallet display
+  // store already has the shape for this — just needs the reconcile path
+};
+```
 
 ### Deliverables
 
-- [ ] Settlement cron / period-boundary trigger (Next.js cron route or Vercel Cron)
-- [ ] `app/api/settlements/route.ts` — serve result + settled bets for a period
-- [ ] `app/api/sse/settlements/route.ts` — optional SSE stream (Phase 2.1)
-- [ ] Store: `onSettlement(bets)` action — reconcile + emit celebration
-- [ ] Tests: settlement integration test (mock DB, verify wallet credit)
+- [ ] `supabase/functions/settle-period/index.ts` — Edge Function (Deno, TypeScript)
+- [ ] `supabase/functions/settle-period/cron.toml` — cron schedule
+- [ ] `lib/db/settlement.ts` — settlement query helpers (used by Edge Function)
+- [ ] Store: `onSettlement(bet)` action + Realtime channel setup in `hydration.ts`
+- [ ] DB: `rounds` table (period result cache — avoids recomputing for every late subscriber)
+- [ ] Tests: Edge Function integration test (mock Supabase DB client)
 
-**Estimated complexity:** Medium. Engine is already pure and server-portable. The main
-work is the cron trigger and polling/SSE wiring.
+**Estimated complexity:** Medium. Engine is server-portable already. Supabase Realtime is
+near-zero config for table change subscriptions.
 
 ---
 
-## Milestone 4b — Commit-reveal fairness (ADR 0006)
+## Milestone 3b — Commit-reveal fairness (ADR 0006)
 
 ### Goal
-Replace the demo fairness model with a cryptographically verifiable commit-reveal scheme,
-so players can independently verify round results are not manipulated.
+Replace the demo fairness model with a verifiable commit-reveal scheme per ADR 0006.
+Players can independently verify results; UI copy changes from "(demo)" to "Provably Fair".
 
 ### Protocol
 
 ```
-Round N opens:
-  1. Server generates serverSeed_N (32 random bytes)
-  2. Server publishes commitment: SHA-256(serverSeed_N) → stored in rounds table
-  3. Client can optionally provide clientSeed_N (user-generated entropy)
+Round N opens (T seconds before period end):
+  1. Edge Function generates: serverSeed_N = crypto.getRandomValues(32 bytes)
+  2. Publishes commitment: commitment_N = SHA-256(serverSeed_N) → stored in rounds table
+  3. Client reads commitment_N and optionally submits clientSeed_N
 
 Betting closes (T-10s before period end):
-  4. Bets locked; no further picks accepted
+  4. No further bets accepted
 
-Period boundary:
+Period boundary (settlement):
   5. Server reveals serverSeed_N
-  6. Result = HMAC-SHA256(serverSeed_N + clientSeed + periodIdx) mod 10
-  7. Result + serverSeed_N published; anyone can verify
+  6. result_num = HMAC-SHA256(serverSeed_N || clientSeed_N || periodIdx) % 10
+  7. rounds table updated with serverSeed + result; anyone can verify
 
-UI copy changes:
-  - "Fair Play (demo) / simulated rounds" → "Provably Fair / verifiable results"
-  - Verification link per round: shows serverSeed, clientSeed, computed result
+UI:
+  - Game history row shows "Verify" button → modal with commitment, seed, formula
+  - /verify page (public, unauthenticated): enter (mode, periodIdx) → recompute + confirm
 ```
 
-### New DB tables
+### New DB table
 
 ```sql
-CREATE TABLE rounds (
-  id            TEXT PRIMARY KEY,       -- mode|periodIdx
-  mode          INTEGER NOT NULL,
-  period_idx    BIGINT NOT NULL,
-  server_seed   TEXT,                   -- null until reveal
-  commitment    TEXT NOT NULL,          -- SHA-256(serverSeed), published at round open
-  client_seed   TEXT,                   -- user-supplied entropy (optional)
-  result_num    INTEGER,                -- 0-9, null until settled
-  settled_at    BIGINT,
-  UNIQUE(mode, period_idx)
+CREATE TABLE public.rounds (
+  id           TEXT PRIMARY KEY,    -- '{mode}|{periodIdx}'
+  mode         INTEGER NOT NULL,
+  period_idx   BIGINT NOT NULL,
+  commitment   TEXT NOT NULL,       -- SHA-256(serverSeed), published at round open
+  server_seed  TEXT,                -- null until reveal
+  client_seed  TEXT,                -- user-supplied entropy (optional)
+  result_num   INTEGER,             -- 0-9, null until settled
+  settled_at   BIGINT,
+  UNIQUE (mode, period_idx)
 );
+
+ALTER TABLE public.rounds ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read" ON public.rounds FOR SELECT USING (true);  -- anyone can verify
 ```
 
-### API routes
+### New code
 
-```
-GET    /api/rounds/:mode/:periodIdx/commitment   → { commitment, periodId }
-GET    /api/rounds/:mode/:periodIdx/result       → { result, serverSeed, commitment }
-POST   /api/rounds/:mode/:periodIdx/client-seed  body: { seed: string }
+```typescript
+// lib/fair/commitReveal.ts
+export function generateServerSeed(): string        // 32 random bytes → hex
+export function commit(serverSeed: string): string  // SHA-256 → hex commitment
+export function reveal(serverSeed: string, clientSeed: string, periodIdx: number): number
+// HMAC-SHA256(serverSeed || clientSeed || periodIdx) % 10
+
+// lib/fair/verify.ts (client-side — runs on /verify page)
+export function verifyResult(serverSeed: string, commitment: string, clientSeed: string, periodIdx: number, claimedNum: number): boolean
 ```
 
 ### UI additions
 
-- Round history row: "Verify" button → opens modal showing commitment, seed, formula
-- `/verify` page: paste `(mode, periodIdx, serverSeed)` → recompute + confirm
+- Game history row: "Verify" chip → opens modal showing commitment, seed, formula
+- `/verify` public page: paste any `(mode, periodIdx)` → recompute result → green/red confirmation
+- `lib/strings.ts` copy change: `"Fair Play (demo)"` → `"Provably Fair"` (two string keys updated)
 
 ### Deliverables
 
-- [ ] `lib/fair/commitReveal.ts` — server-side: `generateSeed()`, `commit()`, `reveal()`
-- [ ] `lib/fair/verify.ts` — client + server: `verifyResult(serverSeed, clientSeed, periodIdx)`
-- [ ] `app/api/rounds/[mode]/[periodIdx]/**` — Route Handlers for commitment, result, client seed
-- [ ] `drizzle/` migration — add `rounds` table
-- [ ] UI: verify button + modal in game history
-- [ ] `/verify` page (unauthenticated, public)
-- [ ] Update copy: "Fair Play (demo)" → "Provably Fair" (strings.ts only)
-- [ ] Tests: golden-value tests for HMAC derivation (match commitment → verify cycle)
+- [ ] `lib/fair/commitReveal.ts` — server-side: generateServerSeed, commit, reveal
+- [ ] `lib/fair/verify.ts` — client-side: verifyResult (Web Crypto API)
+- [ ] `lib/fair/commitReveal.test.ts` — golden-value tests: commitment → reveal → verify cycle
+- [ ] `supabase/functions/open-round/index.ts` — Edge Function: generates + stores commitment at period open
+- [ ] DB migration: `rounds` table + RLS
+- [ ] `app/api/rounds/[mode]/[periodIdx]/client-seed/route.ts` — accept user entropy
+- [ ] Game history: Verify modal (`components/game/VerifyModal.tsx`)
+- [ ] `app/verify/page.tsx` — public verification page (unauthed)
+- [ ] `lib/strings.ts` — update fairness copy keys
 
-**Estimated complexity:** Medium-high. Cryptographic primitives are standard Web Crypto API.
-The UI additions are small. The main work is the round lifecycle management and DB design.
+**Estimated complexity:** Medium-high. Web Crypto API is standard. The lifecycle coordination
+(open-round Edge Function + settlement update) is the main complexity.
 
 ---
 
-## Milestone 5 — Withdrawal & KYC integration
+## Milestone 4 — Withdrawal & KYC integration
 
 ### Goal
-Replace the simulated withdrawal (balance deducted, tx written, nothing actually settles)
-with real on-chain settlement via a crypto payment processor.
+Replace the simulated withdrawal (balance deducted locally, nothing settles) with real on-chain
+settlement. KYC must be verified before any withdrawal is processed.
 
 ### Hard gates (non-negotiable before enabling withdrawals)
 
-1. **KYC verification** — user must verify identity before first withdrawal
-2. **Withdrawal limits** — min/max per-tx, daily limit, cooldown
-3. **AML screening** — wallet address sanity check (e.g. Chainalysis, Elliptic)
-4. **Fee settlement** — the 1% fee currently computed but discarded must actually settle
+1. KYC verification completed (identity document + selfie)
+2. Wallet address passes regex + checksum + OFAC screening
+3. Withdrawal within limits (min, max, daily cap, cooldown)
+4. 1% fee actually deducted and routed to operator account
 
 ### Flow
 
 ```
-User submits withdrawal:
-  → POST /api/transactions/withdraw { amt, network, address }
-  → Server: validate balance, validate address, check KYC/AML
-  → Write tx (status: 'pending'), deduct wallet
-  → Submit to payment processor (TRC20/BEP20/ERC20)
-  → Processor webhook: confirm on-chain → update tx status to 'success' / 'failed'
-  → On failure: re-credit wallet, update tx to 'failed', send notification
+User submits withdrawal → POST /api/transactions/withdraw
+  Server (service role):
+    1. Check KYC status = 'verified' → 403 if not
+    2. Validate amount ≤ wallet.main - daily_withdrawn
+    3. Validate address format + checksum
+    4. OFAC screening (Chainalysis or Elliptic API)
+    5. BEGIN transaction:
+         UPDATE wallets SET main = main - amt WHERE user_id = $uid
+         INSERT transactions (status: 'pending')
+       COMMIT
+    6. Submit to payment processor → get tx_id
+    7. UPDATE transactions SET tx_hash = tx_id
+
+Payment processor webhook → POST /api/webhooks/payments
+  Server verifies HMAC signature
+  On success: UPDATE transactions SET status = 'success'
+  On failure: BEGIN tx → re-credit wallet → UPDATE status = 'failed' → COMMIT
+              → push notification to client via Realtime
 ```
 
 ### Tech choices
 
-| Concern | Option |
-|---|---|
-| Payment processor | **Fireblocks** (enterprise) / **CoinPayments** (simpler) / **NOWPayments** |
-| KYC provider | **Persona** / **Jumio** / **Sumsub** |
-| Address validation | Regex per network + checksum + Chainalysis OFAC screening |
-| Webhook security | HMAC signature verification on processor callbacks |
+| Concern | Recommendation | Notes |
+|---|---|---|
+| Payment processor | **NOWPayments** | Simple API, supports TRC20/BEP20/ERC20, webhooks |
+| KYC provider | **Sumsub** | Widely used for crypto, good SDKs, webhook-based |
+| Address validation | Regex + checksum (`ethers.utils.isAddress` / `tronweb`) | Per-network |
+| OFAC screening | **Chainalysis** (API) | Free tier available for basic screening |
+| KYC doc storage | **Supabase Storage** (private bucket) | Zero extra infra; RLS-protected |
 
 ### New DB additions
 
 ```sql
-ALTER TABLE transactions ADD COLUMN tx_hash TEXT;           -- on-chain tx hash
-ALTER TABLE transactions ADD COLUMN network_address TEXT;   -- destination address
-
-CREATE TABLE kyc_status (
-  user_id       TEXT PRIMARY KEY REFERENCES users(id),
+CREATE TABLE public.kyc_status (
+  user_id       UUID PRIMARY KEY REFERENCES auth.users(id),
   status        TEXT NOT NULL DEFAULT 'unverified',  -- 'unverified'|'pending'|'verified'|'rejected'
-  provider_ref  TEXT,    -- KYC provider's reference ID
+  provider_ref  TEXT,    -- Sumsub applicantId
   verified_at   BIGINT
 );
+
+ALTER TABLE public.kyc_status ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own row" ON public.kyc_status USING (auth.uid() = user_id);
 ```
 
 ### Deliverables
 
 - [ ] `lib/payments/PaymentAdapter.ts` — interface (same seam pattern as DataRepository)
-- [ ] `lib/payments/NowPaymentsAdapter.ts` — concrete Phase-2 implementation
+- [ ] `lib/payments/NowPaymentsAdapter.ts` — NOWPayments REST client
 - [ ] `lib/kyc/KycAdapter.ts` — interface
-- [ ] `lib/kyc/PersonaAdapter.ts` — concrete implementation
-- [ ] `app/api/transactions/withdraw/route.ts` — updated with validation + processor call
-- [ ] `app/api/webhooks/payments/route.ts` — HMAC-verified processor callbacks
-- [ ] `app/api/kyc/route.ts` — initiate KYC session
-- [ ] UI: KYC flow in Withdraw screen (locked until KYC verified)
-- [ ] `drizzle/` migration — tx_hash, network_address, kyc_status table
-- [ ] Tests: withdrawal integration (mock processor adapter)
+- [ ] `lib/kyc/SumsubAdapter.ts` — Sumsub SDK wrapper
+- [ ] `app/api/transactions/withdraw/route.ts` — full validation + processor call
+- [ ] `app/api/webhooks/payments/route.ts` — HMAC-verified; re-credit on failure
+- [ ] `app/api/kyc/route.ts` — initiate Sumsub session → return SDK token
+- [ ] DB migration: `kyc_status` table + Supabase Storage KYC bucket
+- [ ] Withdraw screen: KYC gate UI (locked with "Verify identity" CTA until verified)
+- [ ] Realtime: push withdrawal status updates to client
 
-**Estimated complexity:** High. The adapter seam is clean, but KYC + AML + processor
-integration have significant external dependencies and compliance requirements.
+**Estimated complexity:** High — external provider onboarding takes 2–4 weeks. Start account
+applications for NOWPayments + Sumsub immediately; engineering can proceed in parallel.
 
 ---
 
-## Milestone 6 — Observability, compliance & launch hardening
+## Milestone 5 — Observability, compliance & launch hardening
 
 ### Observability
 
 | Concern | Tool | What to instrument |
 |---|---|---|
-| Application errors | **Sentry** | Next.js route handler errors, store action failures |
-| API latency | **Vercel Analytics** or **Datadog** | p50/p95/p99 per route |
-| Business metrics | Custom event tracking | Bets placed, deposits, withdrawals, DAU |
-| DB health | **Neon monitoring** | Connection pool saturation, query latency |
-| On-chain settlement | Payment processor dashboard + webhook log | Failed txs, pending backlog |
+| Application errors | **Sentry** (Next.js SDK) | Route handler errors, store action failures, Realtime disconnects |
+| API latency | **Vercel Analytics** | p50/p95/p99 per route |
+| Business metrics | **Supabase Dashboard** | Bet volume, deposit/withdrawal funnel, DAU |
+| DB health | **Supabase Dashboard** | Query latency, connection pool saturation |
+| Settlement lag | Custom metric | Time from period end → bets settled (target < 5s) |
+| On-chain settlement | Payment processor dashboard | Failed txs, pending backlog |
 
 ### Rate limiting
 
-```
-POST /api/bets                → 10 bets / user / minute
-POST /api/auth/otp/send       → 3 OTP sends / phone / 10 minutes
-POST /api/transactions/withdraw → 5 withdrawals / user / 24 hours
-```
+Use Vercel Edge Middleware + **`@upstash/ratelimit`** (Redis-backed, edge-compatible):
 
-Use Vercel Edge Middleware + `@upstash/ratelimit` (Redis-backed, edge-compatible).
+```
+POST /api/bets                        → 10 bets / user / minute
+POST /api/auth/* (OTP send)           → 3 requests / phone / 10 minutes  (Supabase enforces this natively)
+POST /api/transactions/withdraw       → 5 withdrawals / user / 24 hours
+POST /api/kyc                         → 3 sessions / user / day
+```
 
 ### Security hardening checklist
 
-- [ ] All API routes validate session cookie before any DB operation
-- [ ] Wallet mutations are database transactions (ACID — no partial credits)
-- [ ] Bet placement: server validates `stake ≤ wallet.main` before deducting
-- [ ] No client-supplied `userId` accepted in request bodies (always from JWT)
-- [ ] CORS: only allow `aurawin.com` origin on API routes
-- [ ] CSP headers: strict (no unsafe-inline outside Tailwind's hash)
-- [ ] Withdrawal addresses: regex + checksum + OFAC screening before processing
-- [ ] Webhook endpoints: verify HMAC signature, reject replays (nonce or timestamp window)
+- [ ] All API routes: validate Supabase session before any DB operation (use `createSupabaseServer()`)
+- [ ] Wallet mutations via service-role only (RLS policy; anon key cannot UPDATE wallets)
+- [ ] Bet placement: server validates `stake ≤ wallet.main` inside DB transaction (no race)
+- [ ] No client-supplied `userId` in request bodies — always from `supabase.auth.getUser()`
+- [ ] Webhook endpoints: verify HMAC signature + reject replays (timestamp window ±5 min)
+- [ ] CSP headers: strict (no unsafe-inline; Tailwind CSS hash)
+- [ ] CORS: only `aurawin.com` allowed on API routes
+- [ ] Withdrawal addresses: regex + checksum + OFAC before processor call
 
 ### Compliance checklist
 
-- [ ] "Simulated, no real money" disclaimer → removed / replaced with real-money disclaimer
-- [ ] Responsible gambling: session time limits, self-exclusion option, spend limits
-- [ ] Privacy policy + Terms of Service (real-money version)
-- [ ] Jurisdiction check: block IPs from restricted regions on API + frontend
-- [ ] Audit log: all wallet mutations logged to append-only table with actor + IP
-- [ ] Data retention: PII deletion on account close (GDPR Article 17)
+- [ ] "Simulated, no real money" disclaimer → real-money disclaimer + T&C link
+- [ ] Responsible gambling: session time warnings, self-exclusion, spend limits
+- [ ] Jurisdiction block: IP check on middleware + API (OFAC sanctioned countries)
+- [ ] Audit log: all wallet mutations to append-only table (`actor_id`, `ip`, `ts`, `delta`)
+- [ ] GDPR: account deletion flow (DELETE from all tables; Supabase cascade handles FK)
+- [ ] Privacy policy + T&C (real-money version, reviewed by legal)
 
 ### Launch readiness gate
 
-| Gate | Owner | Status |
-|---|---|---|
-| All 6 Phase-2 milestones complete | Engineering | - |
-| Penetration test passed | Security | - |
-| KYC provider live | Product | - |
-| Payment processor live + tested | Payments | - |
-| Legal review of T&C + disclaimer | Legal | - |
-| Jurisdiction block list verified | Compliance | - |
-| Load test: 1000 concurrent bets | Engineering | - |
-| Playwright golden snapshots updated | QA | - |
-| Responsible gambling controls live | Product | - |
-| On-call runbook published | Engineering | - |
+| Gate | Owner |
+|---|---|
+| All 5 Phase-2 milestones complete | Engineering |
+| Penetration test passed | Security |
+| KYC provider live + tested end-to-end | Product |
+| Payment processor live + withdrawal tested | Payments |
+| Legal review of T&C + real-money disclaimer | Legal |
+| Jurisdiction block list verified | Compliance |
+| Load test: 1000 concurrent bets | Engineering |
+| Playwright golden snapshots captured (`npm run test:e2e:update`) | QA |
+| Responsible gambling controls live | Product |
+| Supabase backups + PITR verified | Engineering |
+| On-call runbook published | Engineering |
 
 ---
 
 ## What does NOT change in Phase 2
 
-The following Phase-1 artifacts carry forward unchanged:
-
 | Artifact | Why it carries forward |
 |---|---|
 | All 12 screen components | Pixel-perfect; no structural changes needed |
-| `lib/fair/engine.ts` | Pure functions, already server-portable; just import in API routes |
-| `lib/money.ts` | Integer minor-units enforced everywhere; column types match |
-| `lib/theme/` | Theme system is pure CSS-variable, no backend dependency |
-| `types/index.ts` | Schema is the contract; DB columns mirror these types |
-| `components/primitives/` | UI primitives are backend-agnostic |
-| Tailwind v4 tokens | `app/globals.css` unchanged |
-| 198 unit tests | All pass; add Phase-2 integration tests on top |
-| `DataRepository` interface | The seam was built for this; only the implementation swaps |
+| `lib/fair/engine.ts` | Pure functions; zero-dependency; Deno-compatible for Edge Functions |
+| `lib/money.ts` | Integer minor-units match DB column types (`integer`) exactly |
+| `lib/theme/` | Pure CSS-variable system; no backend dependency |
+| `types/index.ts` | Schema is the contract; DB mirrors these types |
+| `components/primitives/` | Backend-agnostic |
+| `app/globals.css` | Tailwind v4 tokens unchanged |
+| 198 unit tests | All pass; Phase-2 adds integration tests on top |
+| `DataRepository` interface | Only the implementation swaps — store unchanged |
 
 ---
 
-## Phase 2 team / agent routing
+## Phase 2 agent routing (CTO agent table)
 
-Using the CTO agent's routing table for Phase 2 tasks:
-
-| Epic | Agents |
+| Milestone | Agents |
 |---|---|
-| M1: DB schema | `types-agent` (schema mirrors) → `store-agent` (new slices) |
-| M2: Auth | `claude` general (API routes) → `screen-porter` (AuthModal update) |
-| M3: RestRepository | `store-agent` (rollback action) → `claude` (RestRepository, API routes) |
-| M4a: Settlement | `engine-agent` (server-side engine) → `claude` (cron + API routes) |
-| M4b: Commit-reveal | `engine-agent` (commitReveal.ts) → `screen-porter` (verify UI) |
-| M5: Withdrawal/KYC | `claude` (payment/KYC adapters + API routes) → `screen-porter` (Withdraw screen KYC gate) |
-| M6: Hardening | `claude` (rate limiting, CSP, observability wiring) |
+| M1: Supabase + DB + Auth | `types-agent` (schema types) → `claude` (Drizzle schema, RLS, auth wiring) → `screen-porter` (AuthModal update) |
+| M2: SupabaseRepository | `store-agent` (rollback action) → `claude` (SupabaseRepository, API routes) |
+| M3a: Settlement + Realtime | `engine-agent` (Edge Function port) → `store-agent` (onSettlement action) → `claude` (cron, Realtime channel) |
+| M3b: Commit-reveal | `engine-agent` (commitReveal.ts, verify.ts) → `screen-porter` (VerifyModal + /verify page) |
+| M4: Withdrawal + KYC | `claude` (payment/KYC adapters, API routes) → `screen-porter` (Withdraw screen KYC gate) |
+| M5: Hardening | `claude` (rate limiting, CSP, audit log, observability wiring) |
 
 ---
 
@@ -617,24 +657,24 @@ Using the CTO agent's routing table for Phase 2 tasks:
 
 | Milestone | Complexity | Engineering weeks (solo) |
 |---|---|---|
-| M1: Infrastructure & DB | Medium | 1 |
-| M2: Auth (OTP + JWT) | Medium-high | 1.5 |
-| M3: RestRepository | Medium | 1 |
-| M4a: Server settlement | Medium | 1 |
-| M4b: Commit-reveal | Medium-high | 1.5 |
-| M5: Withdrawal + KYC | High | 3 |
-| M6: Hardening & launch | Medium | 1.5 |
-| **Total** | | **~10.5 weeks** |
+| M1: Supabase + DB + Auth | Medium | 1.5 |
+| M2: SupabaseRepository | Medium | 1 |
+| M3a: Server settlement + Realtime | Medium | 1 |
+| M3b: Commit-reveal | Medium-high | 1.5 |
+| M4: Withdrawal + KYC | High | 3 |
+| M5: Hardening & launch | Medium | 1.5 |
+| **Total** | | **~9.5 weeks** |
 
-Parallel M4a + M4b reduces wall-clock time by ~1 week. M5 depends on external provider
-onboarding time (KYC/payment processors typically take 2–4 weeks for account approval).
+M3a + M3b in parallel saves ~1 week. M4 depends on external provider onboarding (2–4 weeks
+for account approval — start today).
 
 ---
 
 ## Immediate next actions
 
-1. **Decide hosting** — Vercel + Neon (recommended) vs self-hosted Postgres
-2. **Provision accounts** — OTP provider, payment processor, KYC provider (start now; approval takes weeks)
-3. **Start M1** — DB schema in Drizzle, first migration, connection wired in dev
-4. **Update `process.md`** — add Phase 2 milestone rows
-5. **Open Phase 2 branch** — `feat/phase2-infrastructure`
+1. **Create Supabase project** — production + dev environments at supabase.com
+2. **Apply for payment processor + KYC accounts** — NOWPayments + Sumsub (approval takes weeks)
+3. **Add env vars to Vercel** — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+4. **Install packages** — `@supabase/ssr`, `@supabase/supabase-js`, `drizzle-orm`, `drizzle-kit`
+5. **Create `feat/phase2-supabase` branch** and begin M1
+6. **Update `process.md`** — add Phase 2 milestone rows
