@@ -47,7 +47,7 @@ export interface AuthModalProps {
   onClose: () => void;
 }
 
-type Step = 'contact' | 'otp' | 'magic-link-sent';
+type Step = 'contact' | 'otp' | 'magic-link-sent' | 'google-loading';
 
 export function AuthModal({ open, onClose }: AuthModalProps) {
   const app = useApp();
@@ -130,6 +130,26 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    setError('');
+    setStep('google-loading');
+    try {
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/lobby`,
+        },
+      });
+      if (err) throw err;
+      // Browser will redirect — no further action needed here
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Google sign-in failed');
+      setStep('contact');
+      setLoading(false);
+    }
+  };
+
   return createPortal(
     <div
       onClick={onClose}
@@ -201,7 +221,62 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             >
               {loading ? 'Sending…' : STRINGS.auth.sendOtp}
             </Button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 14px' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              <span style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 600 }}>
+                {STRINGS.auth.orDivider}
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            </div>
+
+            {/* Google OAuth button */}
+            <button
+              disabled={loading}
+              onClick={signInWithGoogle}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                padding: '12px 16px',
+                background: '#fff',
+                border: '1px solid #dadce0',
+                borderRadius: 'var(--radius-sm)',
+                color: '#3c4043',
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'box-shadow .15s',
+              }}
+              onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 6px rgba(32,33,36,.28)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'; }}
+            >
+              {/* Google "G" SVG logo */}
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/>
+              </svg>
+              {STRINGS.auth.continueWithGoogle}
+            </button>
           </>
+        )}
+
+        {step === 'google-loading' && (
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
+              Redirecting to Google…
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-mute)' }}>
+              You'll be returned here after signing in.
+            </div>
+          </div>
         )}
 
         {step === 'otp' && (
