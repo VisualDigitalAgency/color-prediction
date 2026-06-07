@@ -156,6 +156,12 @@ input {
   --glow-accent: 0 0 28px rgba(21, 224, 138, 0.5);
   --card-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
   --header-grad: linear-gradient(135deg, #1ce08a 0%, #0bb568 100%);
+  --big-grad: linear-gradient(135deg, #ff9a3d, #ff5a3d);
+  --small-grad: linear-gradient(135deg, #3da5ff, #7c5cff);
+  --promo-grad: linear-gradient(120deg, #7c5cff, #1ce08a);
+  --game-lotto-grad: linear-gradient(135deg, #8b5cff, #5a3dff);
+  --game-trx-grad: linear-gradient(135deg, #ff3460, #c41846);
+  --game-k3-grad: linear-gradient(135deg, #ff9a3d, #ff5a3d);
 }
 
 [data-theme="fintech"] {
@@ -189,6 +195,12 @@ input {
   --glow-accent: 0 0 18px rgba(227, 185, 100, 0.3);
   --card-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.85);
   --header-grad: linear-gradient(135deg, #e8c272 0%, #c79742 100%);
+  --big-grad: linear-gradient(135deg, #e8924a, #d4623a);
+  --small-grad: linear-gradient(135deg, #5a9ef2, #8e7cf2);
+  --promo-grad: linear-gradient(120deg, #8e7cf2, #e8c272);
+  --game-lotto-grad: linear-gradient(135deg, #8e7cf2, #5a3dcc);
+  --game-trx-grad: linear-gradient(135deg, #ef6a72, #c41846);
+  --game-k3-grad: linear-gradient(135deg, #e8924a, #d4623a);
 }
 
 [data-theme="cyber"] {
@@ -223,4 +235,10 @@ input {
   --glow-accent: 0 0 30px rgba(139, 92, 255, 0.6);
   --card-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.85);
   --header-grad: linear-gradient(135deg, #8b5cff 0%, #1fe0ff 120%);
+  --big-grad: linear-gradient(135deg, #ff9a3d, #ff5a3d);
+  --small-grad: linear-gradient(135deg, #1fe0ff, #8b5cff);
+  --promo-grad: linear-gradient(120deg, #8b5cff, #1fe0ff);
+  --game-lotto-grad: linear-gradient(135deg, #8b5cff, #5a3dff);
+  --game-trx-grad: linear-gradient(135deg, #ff4d7d, #c41846);
+  --game-k3-grad: linear-gradient(135deg, #ff9a3d, #ff5a3d);
 }
