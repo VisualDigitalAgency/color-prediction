@@ -1,24 +1,14 @@
 /**
- * components/auth/AuthModal.tsx — simulated (demo) sign-in / OTP portal modal.
+ * components/auth/AuthModal.tsx — Supabase OTP sign-in portal modal.
  *
- * Ported from the CDN React 18 prototype (`/tmp/proto_extract/web/web-shell.jsx`
- * `AuthModal`). Pass A (inline-parity): every `style={{…}}` object is byte-identical
- * to the prototype — the centered fixed overlay, the 420px card, the `webInput`
- * field style — all referencing `var(--…)`, never hardcoded hex. Tailwind is Pass B.
+ * Phase 2: real OTP via Supabase Auth (`signInWithOtp` / `verifyOtp`).
+ * Supports phone (SMS) or email (magic-link OTP). The UX is unchanged from the
+ * Phase-1 prototype port — same two-step phone → code flow, same inline styles.
  *
- * This is a SIMULATED/DEMO auth: there is no real backend or OTP. Any phone/email
- * (≥3 chars) advances to the code step, and any code confirms — the copy says so
- * (`auth.otpPrompt` mirrors the prototype's "demo: anything works" intent via the
- * landing/strings disclaimer).
- *
- * SUCCESS FLOW (ADR 0003 routing):
- *   On "Verify & enter" → `app.setAuthed(true, demoUser)` writes the authed flag +
- *   a demo `User` into the store, a welcome toast fires, the modal closes, and the
- *   real App Router pushes `/lobby` (ROUTES.home). The prototype's
- *   `app.navigate('home')` is replaced by `router.push`.
- *
- * SSR-safe: rendered via a `createPortal` that is mount-gated — it returns `null`
- * until the client mounts, so there's no SSR/first-paint markup to mismatch.
+ * SUCCESS FLOW:
+ *   verifyOtp → Supabase sets session cookie (via @supabase/ssr) → middleware
+ *   refreshes on next request → store hydrates real user from session.
+ *   app.setAuthed(true, user) syncs Zustand for immediate UI update.
  */
 
 'use client';
@@ -29,12 +19,12 @@ import { useRouter } from 'next/navigation';
 
 import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives';
+import { createSupabaseClient } from '@/lib/supabase/client';
 import { ROUTES } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import STRINGS from '@/lib/strings';
 import type { User } from '@/types';
 
-/** Field style — byte-identical port of the prototype `webInput`. */
 const webInput: React.CSSProperties = {
   width: '100%',
   background: 'var(--bg)',
@@ -61,36 +51,90 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [val, setVal] = useState('');
   const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Portal mount-gate: only render into document.body after the client mounts,
-  // so the server-rendered tree has nothing to mismatch.
   useEffect(() => setMounted(true), []);
 
-  // Reset the flow each time the modal is freshly opened.
   useEffect(() => {
     if (open) {
       setStep('phone');
       setVal('');
       setOtp('');
+      setError('');
     }
   }, [open]);
 
   if (!mounted || !open) return null;
 
-  // Success: mark authed + demo user, toast, close, and route to the lobby.
-  const enter = () => {
-    const demoUser: User = {
-      id: 'demo',
-      handle: 'Player',
-      contact: val || 'demo@aurawin.gg',
-      joinedAt: Date.now(),
-      kycLevel: 1,
-      vipLevel: 1,
-    };
-    app.setAuthed(true, demoUser);
-    app.pushToast(STRINGS.auth.welcome, 'success');
-    onClose();
-    router.push(ROUTES.home);
+  const supabase = createSupabaseClient();
+
+  const isPhone = /^\+?\d/.test(val.trim());
+
+  const sendOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const input = val.trim();
+      const { error: err } = isPhone
+        ? await supabase.auth.signInWithOtp({ phone: input })
+        : await supabase.auth.signInWithOtp({ email: input });
+      if (err) throw err;
+      setStep('otp');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to send code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const input = val.trim();
+      const { data, error: err } = isPhone
+        ? await supabase.auth.verifyOtp({ phone: input, token: otp, type: 'sms' })
+        : await supabase.auth.verifyOtp({ email: input, token: otp, type: 'email' });
+      if (err) throw err;
+
+      const supaUser = data.user;
+      if (!supaUser) throw new Error('No user returned');
+
+      // Upsert profile row (created_at epoch ms)
+      await supabase.from('profiles').upsert({
+        id: supaUser.id,
+        phone: supaUser.phone ?? null,
+        created_at: Date.now(),
+      });
+
+      // Upsert wallet (seed defaults enforced by DB; upsert won't overwrite existing)
+      await supabase.from('wallets').upsert({ user_id: supaUser.id }, { ignoreDuplicates: true });
+
+      // Upsert settings
+      await supabase.from('settings').upsert({ user_id: supaUser.id }, { ignoreDuplicates: true });
+
+      // Upsert vip
+      await supabase.from('vip').upsert({ user_id: supaUser.id }, { ignoreDuplicates: true });
+
+      const user: User = {
+        id: supaUser.id,
+        handle: supaUser.phone ?? supaUser.email ?? 'Player',
+        contact: supaUser.phone ?? supaUser.email ?? '',
+        joinedAt: new Date(supaUser.created_at).getTime(),
+        kycLevel: 0,
+        vipLevel: 0,
+      };
+
+      app.setAuthed(true, user);
+      app.pushToast(STRINGS.auth.welcome, 'success');
+      onClose();
+      router.push(ROUTES.home);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return createPortal(
@@ -142,6 +186,9 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         <div style={{ fontSize: 14, color: 'var(--text-mute)', margin: '6px 0 22px' }}>
           {step === 'phone' ? STRINGS.auth.signInPrompt : STRINGS.auth.otpPrompt}
         </div>
+        {error && (
+          <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 12 }}>{error}</div>
+        )}
         {step === 'phone' ? (
           <div>
             <input
@@ -154,10 +201,10 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               full
               size="lg"
               style={{ marginTop: 14 }}
-              disabled={val.length < 3}
-              onClick={() => setStep('otp')}
+              disabled={val.length < 3 || loading}
+              onClick={sendOtp}
             >
-              {STRINGS.auth.sendOtp}
+              {loading ? 'Sending…' : STRINGS.auth.sendOtp}
             </Button>
           </div>
         ) : (
@@ -168,8 +215,14 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               placeholder={STRINGS.auth.otpPlaceholder}
               style={{ ...webInput, letterSpacing: '8px', textAlign: 'center', fontSize: 22 }}
             />
-            <Button full size="lg" style={{ marginTop: 14 }} onClick={enter}>
-              {STRINGS.auth.verify}
+            <Button
+              full
+              size="lg"
+              style={{ marginTop: 14 }}
+              disabled={otp.length < 4 || loading}
+              onClick={verifyOtp}
+            >
+              {loading ? 'Verifying…' : STRINGS.auth.verify}
             </Button>
           </div>
         )}

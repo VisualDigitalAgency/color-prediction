@@ -35,8 +35,14 @@ import {
   betWins,
   payoutMult,
 } from '@/lib/fair';
-import { localStorageRepository } from '@/lib/persistence';
+import { localStorageRepository, type DataRepository } from '@/lib/persistence';
 import { createSeedState } from '@/lib/persistence';
+
+// Module-level swappable repository — hydration.ts swaps this to SupabaseRepository
+// when a Supabase session is present. No store changes needed at call sites.
+let _repository: DataRepository = localStorageRepository;
+export function setRepository(repo: DataRepository) { _repository = repo; }
+export function getRepository(): DataRepository { return _repository; }
 import { NETWORK_LABEL } from '@/lib/strings';
 import STRINGS from '@/lib/strings';
 
@@ -140,6 +146,10 @@ export interface AppState {
   // ── Settings ────────────────────────────────────────────────────────────────
   setSetting<K extends keyof Settings>(key: K, value: Settings[K]): void;
   setTheme(theme: ThemeId): void;
+
+  // ── Repository (Phase-2 swap point) ──────────────────────────────────────────
+  /** Rollback an optimistic bet placement — restore stake and remove the bet. */
+  rollback(betId: string, stake: number): void;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -194,14 +204,14 @@ export const useStore = create<AppState>()((set, get) => ({
   async hydrate() {
     if (get().hydrated) return;
     try {
-      const loaded = await localStorageRepository.loadState();
+      const loaded = await _repository.loadState();
       const state = loaded ?? createSeedState();
       if (!loaded) {
-        await localStorageRepository.saveState(state);
+        await _repository.saveState(state);
       }
       get().applyPersisted(state);
     } catch {
-      // localStorage unavailable or corrupt; operate on seed state already in store.
+      // Storage unavailable or corrupt; operate on seed state already in store.
     } finally {
       set({ hydrated: true });
     }
@@ -288,12 +298,22 @@ export const useStore = create<AppState>()((set, get) => ({
       return { ok: false, error: msg };
     }
 
-    const bet = await localStorageRepository.placeBet(input);
-
+    // Optimistic update — deduct immediately so UI responds instantly
+    const optimisticId = genId('b_opt');
+    const optimisticBet: Bet = {
+      id: optimisticId,
+      mode: input.mode,
+      kind: input.kind,
+      pick: input.pick,
+      stake: input.stake,
+      periodIdx: 0,
+      periodId: '',
+      status: 'pending',
+      createdAt: Date.now(),
+    };
     set((s) => ({
-      // Deduct stake from main wallet via sub() (clamps at 0).
       wallet: { ...s.wallet, main: sub(s.wallet.main, input.stake) },
-      bets: [bet, ...s.bets],
+      bets: [optimisticBet, ...s.bets],
       tx: [
         {
           id: genId('tb'),
@@ -308,12 +328,25 @@ export const useStore = create<AppState>()((set, get) => ({
       ],
     }));
 
-    get().pushToast(STRINGS.game.betPlaced, 'success');
-    return { ok: true };
+    try {
+      const bet = await _repository.placeBet(input);
+      // Reconcile: replace optimistic bet with server-canonical version
+      set((s) => ({
+        bets: s.bets.map((b) => (b.id === optimisticId ? bet : b)),
+      }));
+      get().pushToast(STRINGS.game.betPlaced, 'success');
+      return { ok: true };
+    } catch (err: unknown) {
+      // Rollback optimistic update on server rejection
+      get().rollback(optimisticId, input.stake);
+      const msg = err instanceof Error ? err.message : STRINGS.game.insufficientBalance;
+      get().pushToast(msg, 'error');
+      return { ok: false, error: msg };
+    }
   },
 
   async deposit(input) {
-    const txn = await localStorageRepository.createDeposit(input);
+    const txn = await _repository.createDeposit(input);
     set((s) => ({
       wallet: { ...s.wallet, main: add(s.wallet.main, input.amt) },
       tx: [txn, ...s.tx],
@@ -329,7 +362,7 @@ export const useStore = create<AppState>()((set, get) => ({
       get().pushToast(msg, 'error');
       return { ok: false, error: msg };
     }
-    const txn = await localStorageRepository.createWithdrawal(input);
+    const txn = await _repository.createWithdrawal(input);
     set((s) => ({
       wallet: { ...s.wallet, main: sub(s.wallet.main, input.amt) },
       tx: [txn, ...s.tx],
@@ -458,11 +491,19 @@ export const useStore = create<AppState>()((set, get) => ({
     // not yet flushed by the 400ms debounce are not overwritten.
     // localStorageRepository.setSetting() re-reads from storage (stale blob risk),
     // so we use saveState with the live in-memory snapshot instead.
-    void localStorageRepository.saveState(toPersisted(get()));
+    void _repository.saveState(toPersisted(get()));
   },
 
   setTheme(theme) {
     get().setSetting('theme', theme);
+  },
+
+  rollback(betId, stake) {
+    set((s) => ({
+      wallet: { ...s.wallet, main: add(s.wallet.main, stake) },
+      bets: s.bets.filter((b) => b.id !== betId),
+      tx: s.tx.slice(1), // drop the optimistic bet-debit tx at head
+    }));
   },
 }));
 

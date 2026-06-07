@@ -7,15 +7,31 @@
  * `DataRepository` interface — callers depend only on the contract, never a concrete.
  */
 
-// ── Contract (re-exported from the seam doc module) ─────────────────────────────
+// ── Contract ─────────────────────────────────────────────────────────────────────
 export type { Repository, DataRepository } from './repository';
 
-// ── Phase-1 concrete implementation ─────────────────────────────────────────────
+// ── Concrete implementations ─────────────────────────────────────────────────────
 export {
   LocalStorageRepository,
   localStorageRepository,
   STORAGE_KEYS,
 } from './LocalStorageRepository';
+export { SupabaseRepository } from './SupabaseRepository';
+export { NullRepository } from './NullRepository';
+export { ApiError } from './ApiError';
+
+// ── Factory (swap point — no store changes needed) ───────────────────────────────
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { DataRepository } from '@/types';
+import { LocalStorageRepository } from './LocalStorageRepository';
+import { SupabaseRepository } from './SupabaseRepository';
+import { NullRepository } from './NullRepository';
+
+export function createRepository(supabase?: SupabaseClient): DataRepository {
+  if (typeof window === 'undefined') return new NullRepository();
+  if (supabase) return new SupabaseRepository(supabase);
+  return new LocalStorageRepository();
+}
 
 // ── Seed (initial demo snapshot) ────────────────────────────────────────────────
 export {
