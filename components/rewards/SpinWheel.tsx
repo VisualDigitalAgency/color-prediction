@@ -7,32 +7,42 @@
  *   - Store manages prize selection via weighted random; local state still
  *     manages the visual rotation independently for animation.
  *   - `app.rewards.freeSpins` drives the spin count instead of local state.
+ *   - Segment colours read from CSS vars at render time so all three themes work.
  */
 import * as React from 'react';
 import { useState } from 'react';
 import { useApp } from '@/lib/store/useApp';
-import { fromMinor } from '@/lib/money';
 import { Button } from '@/components/primitives/Button';
 import { Icon } from '@/components/icons/Icon';
 
-const PRIZES_VISUAL = [
-  { label: '5', c: '#15e08a' },
-  { label: 'x2', c: '#23263a' },
-  { label: '20', c: '#b14bff' },
-  { label: 'Again', c: '#23263a' },
-  { label: '50', c: '#ffc63d' },
-  { label: 'x5', c: '#23263a' },
-  { label: '100', c: '#ff3460' },
-  { label: '888', c: '#1fe0ff' },
-];
+/** Read a CSS custom property from the document root (theme-aware). */
+function cssVar(name: string): string {
+  if (typeof document === 'undefined') return '#000';
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// Segment colour keys — resolved at render time from the active theme's CSS vars.
+// Alternating 'dark' segments use --chip so they adapt to each theme's surface colour.
+const PRIZE_TOKENS = [
+  { label: '5',     token: '--green' },
+  { label: 'x2',   token: '--chip' },
+  { label: '20',   token: '--violet' },
+  { label: 'Again',token: '--chip' },
+  { label: '50',   token: '--gold' },
+  { label: 'x5',   token: '--chip' },
+  { label: '100',  token: '--red' },
+  { label: '888',  token: '--accent-2' },
+] as const;
 
 export function SpinWheel() {
   const app = useApp();
   const [rot, setRot] = useState(0);
   const [spinning, setSpinning] = useState(false);
 
-  const seg = 360 / PRIZES_VISUAL.length;
-  const grad = PRIZES_VISUAL.map(
+  // Resolve CSS vars at render time so the wheel re-colours on theme change.
+  const prizes = PRIZE_TOKENS.map((p) => ({ ...p, c: cssVar(p.token) }));
+  const seg = 360 / prizes.length;
+  const grad = prizes.map(
     (p, i) => `${p.c} ${i * seg}deg ${(i + 1) * seg}deg`,
   ).join(', ');
 
@@ -42,7 +52,7 @@ export function SpinWheel() {
     if (spinning || freeSpins <= 0) return;
     setSpinning(true);
 
-    const idx = Math.floor(Math.random() * PRIZES_VISUAL.length);
+    const idx = Math.floor(Math.random() * PRIZE_TOKENS.length);
     const final = rot + (360 * 6 - (idx * seg + seg / 2) - (rot % 360));
     setRot(final);
 
@@ -90,7 +100,7 @@ export function SpinWheel() {
               '0 0 0 7px var(--surface-2), 0 0 0 9px var(--accent), var(--glow-accent)',
           }}
         >
-          {PRIZES_VISUAL.map((p, i) => (
+          {prizes.map((p, i) => (
             <div
               key={i}
               style={{

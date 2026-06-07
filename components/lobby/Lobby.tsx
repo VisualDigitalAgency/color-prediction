@@ -44,7 +44,7 @@ interface GameCard {
 }
 
 const GAMES: GameCard[] = [
-  { key: 'wingo', name: 'Wingo', tag: 'Color prediction', grad: 'linear-gradient(135deg,#15e08a,#0bb568)', icon: 'target', live: true },
+  { key: 'wingo', name: 'Wingo', tag: 'Color prediction', grad: 'var(--header-grad)', icon: 'target', live: true },
   { key: 'k3', name: 'K3 Dice', tag: 'Lucky dice', grad: 'linear-gradient(135deg,#ff9a3d,#ff5a3d)', icon: 'grid' },
   { key: '5d', name: '5D Lotto', tag: 'Number draw', grad: 'linear-gradient(135deg,#8b5cff,#5a3dff)', icon: 'diamond' },
   { key: 'trx', name: 'TRX Win', tag: 'Hash blocks', grad: 'linear-gradient(135deg,#ff3460,#c41846)', icon: 'bolt' },
