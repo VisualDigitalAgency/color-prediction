@@ -17,20 +17,13 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div style={{ maxWidth: w }} className="pt-6 px-4 app:px-7 pb-12 mx-auto">
     {children}
   </div>
 );
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
-  <div
-    style={{
-      fontSize: 16,
-      fontWeight: 800,
-      color: 'var(--text)',
-      margin: '4px 2px 14px',
-    }}
-  >
+  <div className="text-base font-extrabold text-text mt-1 mx-0.5 mb-3.5">
     {children}
   </div>
 );
@@ -42,14 +35,7 @@ export function Referral() {
 
   return (
     <Wrap w={1080}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
-          gap: 18,
-          marginBottom: 18,
-        }}
-      >
+      <div className="grid grid-cols-1 app:grid-cols-[1.2fr_1fr] gap-[18px] mb-[18px]">
         <Card
           glow
           pad={26}
@@ -58,45 +44,18 @@ export function Referral() {
               'linear-gradient(135deg, color-mix(in srgb,var(--green) 14%,var(--surface)), var(--surface))',
           }}
         >
-          <div
-            style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 700 }}
-          >
+          <div className="text-xs text-[var(--text-dim)] font-bold">
             LIFETIME COMMISSION
           </div>
-          <div
-            style={{
-              fontSize: 40,
-              fontWeight: 900,
-              color: 'var(--green)',
-              margin: '4px 0 18px',
-            }}
-          >
+          <div className="text-[40px] font-black text-green mt-1 mb-[18px]">
             {formatMoney(app.wallet.referral)} USDT
           </div>
-          <div
-            style={{ display: 'flex', gap: 12, alignItems: 'center' }}
-          >
-            <div
-              style={{
-                flex: 1,
-                background: 'var(--surface-2)',
-                border: '1px dashed var(--border)',
-                borderRadius: 12,
-                padding: '14px 16px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 10.5,
-                  color: 'var(--text-mute)',
-                  fontWeight: 700,
-                }}
-              >
+          <div className="flex gap-3 items-center">
+            <div className="flex-1 bg-[var(--surface-2)] border border-dashed border-[var(--border)] rounded-xl py-3.5 px-4">
+              <div className="text-[10.5px] text-[var(--text-mute)] font-bold">
                 INVITE LINK
               </div>
-              <div
-                style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}
-              >
+              <div className="text-[15px] font-extrabold text-text">
                 {link}
               </div>
             </div>
@@ -114,9 +73,7 @@ export function Referral() {
           </div>
         </Card>
 
-        <div
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}
-        >
+        <div className="grid grid-cols-3 gap-3.5">
           {(
             [
               ['Team', '128', 'users'],
@@ -125,28 +82,13 @@ export function Referral() {
             ] as const
           ).map((s, i) => (
             <Card key={i} pad={18} style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  color: 'var(--accent-2)',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginBottom: 8,
-                }}
-              >
+              <div className="text-[var(--accent-2)] flex justify-center mb-2">
                 {Icon[s[2]]?.({ size: 20 })}
               </div>
-              <div
-                style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}
-              >
+              <div className="text-[22px] font-black text-text">
                 {s[1]}
               </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-mute)',
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-[11px] text-[var(--text-mute)] font-semibold">
                 {s[0]}
               </div>
             </Card>
@@ -155,9 +97,7 @@ export function Referral() {
       </div>
 
       <H2>Commission levels</H2>
-      <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-[repeat(3,1fr)] gap-3.5">
         {(
           [
             ['Level 1', 'Direct invites', '30%', 'var(--green)'],
@@ -171,38 +111,23 @@ export function Referral() {
             style={{ display: 'flex', alignItems: 'center', gap: 14 }}
           >
             <div
+              className="size-11 rounded-xl flex items-center justify-center font-black text-[15px]"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
                 background: `color-mix(in srgb,${l[3]} 18%,transparent)`,
                 color: l[3],
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
-                fontSize: 15,
               }}
             >
               L{i + 1}
             </div>
-            <div style={{ flex: 1 }}>
-              <div
-                style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}
-              >
+            <div className="flex-1">
+              <div className="text-[14.5px] font-bold text-text">
                 {l[0]}
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: 'var(--text-mute)',
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-xs text-[var(--text-mute)] font-semibold">
                 {l[1]}
               </div>
             </div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: l[3] }}>
+            <div className="text-2xl font-black" style={{ color: l[3] }}>
               {l[2]}
             </div>
           </Card>

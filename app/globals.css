@@ -20,6 +20,11 @@
   --font-sans: var(--app-font, "Poppins", system-ui, sans-serif);
 }
 
+/* Custom breakpoint: ≥1100px = full desktop shell + multi-column layouts */
+@theme {
+  --breakpoint-app: 1100px;
+}
+
 /* ---- reset (verbatim from prototype) ---- */
 * {
   box-sizing: border-box;

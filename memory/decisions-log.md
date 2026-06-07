@@ -15,3 +15,37 @@ Chronological, lightweight log of decisions as they're made. Formal ones graduat
   checklist in `process.md`.
 - **Dropped from prototype:** mock Chrome frame, Tweaks panel, `Stage`/`WebFrame`/`WebApp`,
   native mobile flavor.
+
+## 2026-06-07
+- **Phase 2 backend stack locked: Supabase.** PostgreSQL (hosted, Supavisor connection pooling) +
+  Supabase Auth (OTP phone/email built-in — no Twilio integration needed) + Row-Level Security
+  (replaces hand-rolled auth guards on API routes) + Realtime (replaces SSE polling for settlement
+  push) + Storage (KYC document bucket). Hosting: Vercel (Next.js) + Supabase (all backend services).
+  ORM: Drizzle (TypeScript-first, schema = source of truth). Full plan in `docs/PHASE2-PLAN.md`.
+- **Phase 2 dependency order:** M1 (Supabase + DB + Auth) → M2 (SupabaseRepository) →
+  M3a (server settlement + Realtime) ∥ M3b (commit-reveal) → M4 (withdrawal + KYC) → M5 (hardening).
+  M4 provider onboarding (NOWPayments + Sumsub) has 2–4 week approval lead time — start immediately.
+
+## 2026-06-06
+- **Pass B (Step 11) inline-style policy:** Keep `style={{}}` only for values that are computed
+  at render time: state-driven conditional expressions, `color-mix()` / `conic-gradient()` calls
+  (Tailwind arbitrary values can't contain spaces without underscore mangling), per-datum color
+  arrays, and `Card` / `SVG` style props that the component API forwards to the DOM. Everything
+  else → Tailwind v4 utility class.
+- **`color-mix()` stays inline:** Tailwind arbitrary values normalize underscore-separated spaces,
+  which would corrupt the `color-mix(in srgb, ...)` syntax. All `color-mix()` calls remain as
+  inline styles.
+- **`WebkitBackgroundClip` / `WebkitTextFillColor` stay inline:** No Tailwind equivalent for the
+  gradient-text clip effect used in the Landing hero. These are the only vendor-prefixed styles in
+  the codebase.
+- **Test environment split:** Vitest environment = `node` globally; component tests use
+  `// @vitest-environment jsdom` docblock + `afterEach(cleanup)` via `tests/setup.ts`. This keeps
+  the node-only persistence/engine/money tests free of jsdom overhead.
+- **Playwright visual CI threshold:** `maxDiffPixelRatio: 0.02` (2%). Chosen to allow sub-pixel
+  font rendering variation across OS/GPU while still catching meaningful visual regressions.
+- **CI pipeline shape:** 3 jobs in sequence: `unit` (fast, no build) → `build` (artifact handoff
+  to e2e) → `e2e` (Playwright Chromium only). Browser matrix deferred to Phase 2 (currently only
+  Chrome is needed for the desktop-first app).
+- **Playwright golden workflow:** First-run `npm run test:e2e:update` creates snapshot files;
+  developers commit them alongside tests. CI treats missing snapshots as a failure, not a first-run
+  create, to prevent silent regressions.

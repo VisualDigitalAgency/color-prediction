@@ -23,4 +23,28 @@ bites; link the fix.
    *Mitigation:* gate in `(app)/layout.tsx`; render nothing/redirect until `authed` known.
 
 ## Encountered
-- *(none yet — append with date, symptom, root cause, fix, commit)*
+- **2026-06-06 · Vitest globals=false breaks @testing-library/jest-dom auto-setup:**
+  `@testing-library/jest-dom` calls `expect.extend()` at import time, but `expect` isn't global
+  when `globals: false`. *Fix:* import `@testing-library/jest-dom/vitest` (the package's
+  Vitest-specific entry point that uses `import { expect } from 'vitest'` internally).
+  Also: `@testing-library/react` auto-cleanup hooks into global `afterEach`, which doesn't exist
+  with `globals: false`. *Fix:* explicitly call `afterEach(cleanup)` in `tests/setup.ts`, importing
+  `afterEach` from `vitest`. Commit: `feat(step-14)`.
+
+- **2026-06-06 · Playwright tests picked up by Vitest:** `tests/e2e/visual.spec.ts` imports from
+  `@playwright/test` which exports its own `test()` / `expect()`. Vitest tried to run it and threw
+  "Playwright Test did not expect test() to be called here." *Fix:* Add
+  `exclude: ['tests/e2e/**', 'node_modules/**']` to the Vitest config `test` block. Commit:
+  `feat(step-14)`.
+
+- **2026-06-06 · `environmentMatchGlobs` not applied in Vitest v4:** The `environmentMatchGlobs`
+  option in `vitest.config.ts` was not switching component test files to `jsdom` — they still ran
+  in `node` and threw `document is not defined`. *Fix:* Use the `// @vitest-environment jsdom`
+  per-file docblock comment at the top of each component test file instead. Commit: `feat(step-14)`.
+
+- **2026-06-06 · `color-mix()` breaks in Tailwind arbitrary values:** During Pass B, replacing
+  `style={{ background: 'color-mix(in srgb, var(--green) 16%, transparent)' }}` with a Tailwind
+  arbitrary value like `bg-[color-mix(in_srgb,_var(--green)_16%,_transparent)]` (underscores for
+  spaces) produces invalid CSS because `color-mix()` requires spaces around the keyword `in`. Tailwind
+  converts underscores to spaces only outside function argument lists, making this unreliable. *Fix:*
+  Keep all `color-mix()` calls as inline `style` props — they are legitimately dynamic values.

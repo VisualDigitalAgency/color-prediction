@@ -17,7 +17,7 @@ import { TxTable } from './TxTable';
 import { StatusBadge } from './StatusBadge';
 
 const Wrap = ({ children, w = 980 }: { children: React.ReactNode; w?: number }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
@@ -29,7 +29,7 @@ export function History() {
 
   return (
     <Wrap w={980}>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
+      <div className="flex gap-2.5 mb-[18px]">
         {(
           [
             ['tx', 'Transactions'],
@@ -39,18 +39,11 @@ export function History() {
           <button
             key={t[0]}
             onClick={() => setTab(t[0])}
-            style={{
-              padding: '9px 18px',
-              borderRadius: 999,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 13.5,
-              fontWeight: 700,
-              background: tab === t[0] ? 'var(--accent)' : 'var(--surface)',
-              color: tab === t[0] ? 'var(--accent-ink)' : 'var(--text-dim)',
-              border:
-                '1px solid ' + (tab === t[0] ? 'transparent' : 'var(--border)'),
-            }}
+            className={`py-[9px] px-[18px] rounded-full cursor-pointer text-[13.5px] font-bold border ${
+              tab === t[0]
+                ? 'bg-[var(--accent)] text-[var(--accent-ink)] border-transparent'
+                : 'bg-surface text-[var(--text-dim)] border-[var(--border)]'
+            }`}
           >
             {t[1]}
           </button>
@@ -60,16 +53,8 @@ export function History() {
       {tab === 'tx' ? (
         <TxTable items={app.tx} />
       ) : app.bets.length ? (
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            padding: 8,
-            boxShadow: 'var(--card-shadow)',
-          }}
-        >
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="bg-surface border border-[var(--border)] rounded-[var(--radius)] p-2 shadow-[var(--card-shadow)] overflow-x-auto">
+          <table className="w-full border-collapse min-w-[480px]">
             <tbody>
               {app.bets.map((b, i) => {
                 const pickStr = String(b.pick);
@@ -82,41 +67,18 @@ export function History() {
                 return (
                   <tr
                     key={b.id}
-                    style={{
-                      borderBottom:
-                        i < app.bets.length - 1
-                          ? '1px solid var(--border)'
-                          : 'none',
-                    }}
+                    className={i < app.bets.length - 1 ? 'border-b border-[var(--border)]' : ''}
                   >
-                    <td style={{ padding: '12px' }}>
+                    <td className="p-3">
                       {b.result ? (
                         <ResultBall num={b.result.num} size={32} />
                       ) : (
-                        <div
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            background: 'var(--surface-2)',
-                            color: 'var(--gold)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
+                        <div className="size-8 rounded-full bg-[var(--surface-2)] text-[var(--gold)] flex items-center justify-center">
                           {Icon.clock({ size: 16 })}
                         </div>
                       )}
                     </td>
-                    <td
-                      style={{
-                        padding: '12px',
-                        fontSize: 13.5,
-                        fontWeight: 700,
-                        color: 'var(--text)',
-                      }}
-                    >
+                    <td className="p-3 text-[13.5px] font-bold text-text">
                       Wingo{' '}
                       {
                         app.MODE_LABEL[
@@ -125,25 +87,15 @@ export function History() {
                       }{' '}
                       · {label}
                     </td>
-                    <td
-                      style={{
-                        padding: '12px',
-                        fontSize: 11.5,
-                        color: 'var(--text-mute)',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
+                    <td className="p-3 text-[11.5px] text-[var(--text-mute)] tabular-nums">
                       Period {b.periodId}
                     </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
+                    <td className="p-3 text-right">
                       <StatusBadge status={b.status} />
                     </td>
                     <td
+                      className="p-3 text-right text-sm font-extrabold"
                       style={{
-                        padding: '12px',
-                        textAlign: 'right',
-                        fontSize: 14,
-                        fontWeight: 800,
                         color:
                           b.status === 'won'
                             ? 'var(--green)'
@@ -166,18 +118,11 @@ export function History() {
         </div>
       ) : (
         <Card pad={48} style={{ textAlign: 'center', color: 'var(--text-mute)' }}>
-          <div
-            style={{
-              marginBottom: 10,
-              display: 'flex',
-              justifyContent: 'center',
-              opacity: 0.5,
-            }}
-          >
+          <div className="mb-2.5 flex justify-center opacity-50">
             {Icon.history({ size: 38 })}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>No bets yet</div>
-          <div style={{ fontSize: 12.5, marginTop: 4, marginBottom: 16 }}>
+          <div className="text-sm font-bold">No bets yet</div>
+          <div className="text-[12.5px] mt-1 mb-4">
             Place your first bet on Wingo
           </div>
           <Button onClick={() => router.push(ROUTES.game)}>Play now</Button>

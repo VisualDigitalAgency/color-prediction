@@ -40,6 +40,7 @@ export function TopBar({ title, onMenu }: TopBarProps) {
 
   return (
     <header
+      className="py-3 px-4 app:py-4 app:px-7"
       style={{
         position: 'sticky',
         top: 0,
@@ -47,7 +48,6 @@ export function TopBar({ title, onMenu }: TopBarProps) {
         display: 'flex',
         alignItems: 'center',
         gap: 16,
-        padding: '16px 28px',
         background: 'color-mix(in srgb, var(--bg) 82%, transparent)',
         backdropFilter: 'blur(14px)',
         borderBottom: '1px solid var(--border)',
@@ -76,13 +76,12 @@ export function TopBar({ title, onMenu }: TopBarProps) {
           <div key={i} style={{ width: '100%', height: 2, borderRadius: 1, background: 'currentColor' }} />
         ))}
       </button>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>{title}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="text-lg app:text-[22px] font-black truncate" style={{ color: 'var(--text)' }}>{title}</div>
       </div>
       <div
+        className="hidden app:flex items-center"
         style={{
-          display: 'flex',
-          alignItems: 'center',
           gap: 8,
           padding: '8px 8px 8px 14px',
           borderRadius: 999,

@@ -28,9 +28,10 @@ export function TxTable({ items }: { items: Transaction[] }) {
         borderRadius: 'var(--radius)',
         padding: 8,
         boxShadow: 'var(--card-shadow)',
+        overflowX: 'auto',
       }}
     >
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
         <tbody>
           {items.map((t, i) => (
             <tr

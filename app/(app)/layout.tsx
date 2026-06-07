@@ -28,6 +28,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
+import { ErrorBoundary } from '@/components/shell/ErrorBoundary';
 import { MobileNav } from '@/components/shell/MobileNav';
 import { Sidebar } from '@/components/shell/Sidebar';
 import { TopBar } from '@/components/shell/TopBar';
@@ -104,7 +105,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }}
       >
         <TopBar title={title} onMenu={() => setDrawerOpen(true)} />
-        <main className="app-main-content" style={{ flex: 1, overflowY: 'auto' }}>{children}</main>
+        <main className="app-main-content" style={{ flex: 1, overflowY: 'auto' }}>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
     </div>
   );

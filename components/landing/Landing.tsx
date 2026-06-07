@@ -72,38 +72,20 @@ export function Landing() {
   ];
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto' }}>
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-[1180px] mx-auto px-4 app:px-8">
         {/* nav */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px 0',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 13,
-                background: 'var(--header-grad)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'var(--glow-accent)',
-              }}
-            >
+        <div className="flex items-center justify-between py-6">
+          <div className="flex items-center gap-[11px]">
+            <div className="size-10 rounded-[13px] bg-[var(--header-grad)] flex items-center justify-center shadow-[var(--glow-accent)]">
               {Icon.target({ size: 24, color: 'var(--accent-ink)' })}
             </div>
-            <div style={{ fontSize: 21, fontWeight: 900, color: 'var(--text)', letterSpacing: '.5px' }}>
+            <div className="text-[21px] font-black text-text tracking-[.5px]">
               {STRINGS.app.namePrefix}
-              <span style={{ color: 'var(--accent)' }}>{STRINGS.app.nameSuffix}</span>
+              <span className="text-[var(--accent)]">{STRINGS.app.nameSuffix}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="flex gap-2.5">
             <Button variant="ghost" onClick={onEnter}>
               {STRINGS.auth.signIn}
             </Button>
@@ -112,52 +94,13 @@ export function Landing() {
         </div>
 
         {/* hero */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1.05fr .95fr',
-            gap: 40,
-            alignItems: 'center',
-            padding: '50px 0 60px',
-          }}
-        >
+        <div className="grid grid-cols-1 app:grid-cols-[1.05fr_.95fr] gap-10 items-center pt-[30px] pb-[30px] app:pt-[50px] app:pb-[60px]">
           <div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 7,
-                padding: '6px 13px',
-                borderRadius: 999,
-                background: 'var(--glass)',
-                border: '1px solid var(--glass-brd)',
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--accent-2)',
-                marginBottom: 22,
-              }}
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: 4,
-                  background: 'var(--green)',
-                  boxShadow: 'var(--glow-green)',
-                }}
-              />
+            <div className="inline-flex items-center gap-[7px] py-1.5 px-[13px] rounded-full bg-[var(--glass)] border border-[var(--glass-brd)] text-xs font-bold text-[var(--accent-2)] mb-[22px]">
+              <span className="size-[7px] rounded-[4px] bg-green shadow-[var(--glow-green)]" />
               {'12,480 ' + STRINGS.landing.playersOnline}
             </div>
-            <h1
-              style={{
-                fontSize: 58,
-                lineHeight: 1.04,
-                fontWeight: 900,
-                color: 'var(--text)',
-                margin: '0 0 18px',
-                letterSpacing: '-1px',
-              }}
-            >
+            <h1 className="text-[36px] app:text-[58px] leading-[1.04] font-black text-text mt-0 mb-[18px] tracking-[-1px]">
               {STRINGS.landing.heroTitle}
               <br />
               <span
@@ -170,18 +113,10 @@ export function Landing() {
                 {STRINGS.landing.heroTitleAccent}
               </span>
             </h1>
-            <p
-              style={{
-                fontSize: 17,
-                color: 'var(--text-dim)',
-                lineHeight: 1.6,
-                margin: '0 0 30px',
-                maxWidth: 460,
-              }}
-            >
+            <p className="text-[17px] text-[var(--text-dim)] leading-[1.6] mt-0 mb-[30px] max-w-[460px]">
               {STRINGS.landing.heroBody}
             </p>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div className="flex gap-3">
               <Button size="lg" icon="bolt" onClick={onEnter}>
                 {STRINGS.actions.startPlaying}
               </Button>
@@ -191,21 +126,14 @@ export function Landing() {
             </div>
             {/* Visible "simulated — no real money · 18+" disclaimer (separate from
                 the global blocking AgeGate). Placed directly under the hero CTA. */}
-            <div
-              style={{
-                fontSize: 12,
-                color: 'var(--text-mute)',
-                fontWeight: 600,
-                marginTop: 16,
-              }}
-            >
+            <div className="text-xs text-[var(--text-mute)] font-semibold mt-4">
               {STRINGS.app.disclaimer}
             </div>
-            <div style={{ display: 'flex', gap: 28, marginTop: 36 }}>
+            <div className="flex gap-7 mt-9">
               {stats.map((s, i) => (
                 <div key={i}>
-                  <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--text)' }}>{s[0]}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 600 }}>{s[1]}</div>
+                  <div className="text-[26px] font-black text-text">{s[0]}</div>
+                  <div className="text-xs text-[var(--text-mute)] font-semibold">{s[1]}</div>
                 </div>
               ))}
             </div>
@@ -213,48 +141,37 @@ export function Landing() {
 
           {/* live preview card */}
           <Card pad={0} glow style={{ overflow: 'hidden' }}>
-            <div style={{ background: 'var(--header-grad)', padding: '20px 22px', color: 'var(--accent-ink)' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, opacity: 0.8 }}>WINGO · 30s · LIVE</div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: 6,
-                }}
-              >
-                <div style={{ fontSize: 15, fontWeight: 800 }}>{STRINGS.landing.nextDraw}</div>
-                <div style={{ fontSize: 30, fontWeight: 900, fontVariantNumeric: 'tabular-nums' }}>
+            <div className="bg-[var(--header-grad)] py-5 px-[22px] text-[var(--accent-ink)]">
+              <div className="text-xs font-extrabold opacity-80">WINGO · 30s · LIVE</div>
+              <div className="flex items-center justify-between mt-1.5">
+                <div className="text-[15px] font-extrabold">{STRINGS.landing.nextDraw}</div>
+                <div className="text-[30px] font-black tabular-nums">
                   {'00:' + String(app.secondsLeft(30, now)).padStart(2, '0')}
                 </div>
               </div>
             </div>
-            <div style={{ padding: 22 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-mute)', marginBottom: 10 }}>
+            <div className="p-[22px]">
+              <div className="text-[11px] font-bold text-[var(--text-mute)] mb-2.5">
                 {STRINGS.landing.recentResults}
               </div>
-              <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
+              <div className="flex gap-2.5 mb-[18px]">
                 {recent.map((r, i) => (
                   <ResultBall key={i} num={r.num} size={38} />
                 ))}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+              <div className="grid grid-cols-[repeat(3,1fr)] gap-2.5">
                 {colors.map((c, i) => (
                   <div
                     key={i}
                     onClick={onEnter}
+                    className="text-white rounded-[var(--radius-sm)] py-3.5 px-2 text-center cursor-pointer"
                     style={{
                       background: c[1],
-                      color: '#fff',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '14px 8px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
                       boxShadow: '0 0 18px ' + c[1],
                     }}
                   >
-                    <div style={{ fontSize: 15, fontWeight: 800 }}>{c[0]}</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.85 }}>{'Win ' + c[2]}</div>
+                    <div className="text-[15px] font-extrabold">{c[0]}</div>
+                    <div className="text-[11px] font-bold opacity-85">{'Win ' + c[2]}</div>
                   </div>
                 ))}
               </div>
@@ -263,27 +180,14 @@ export function Landing() {
         </div>
 
         {/* features */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, paddingBottom: 70 }}>
+        <div className="grid grid-cols-2 app:grid-cols-[repeat(4,1fr)] gap-4 pb-[40px] app:pb-[70px]">
           {feats.map((f, i) => (
             <Card key={i} pad={20}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 13,
-                  background: 'var(--glass)',
-                  border: '1px solid var(--glass-brd)',
-                  color: 'var(--accent-2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 14,
-                }}
-              >
+              <div className="size-11 rounded-[13px] bg-[var(--glass)] border border-[var(--glass-brd)] text-[var(--accent-2)] flex items-center justify-center mb-3.5">
                 {Icon[f[0]]({ size: 22 })}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 5 }}>{f[1]}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-mute)', lineHeight: 1.5 }}>{f[2]}</div>
+              <div className="text-base font-extrabold text-text mb-[5px]">{f[1]}</div>
+              <div className="text-[13px] text-[var(--text-mute)] leading-[1.5]">{f[2]}</div>
             </Card>
           ))}
         </div>

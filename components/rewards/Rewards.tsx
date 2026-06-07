@@ -22,7 +22,7 @@ const Wrap = ({
   children: React.ReactNode;
   w?: number;
 }) => (
-  <div style={{ padding: '24px 28px 48px', maxWidth: w, margin: '0 auto' }}>
+  <div className="pt-6 px-4 app:px-7 pb-12 mx-auto" style={{ maxWidth: w }}>
     {children}
   </div>
 );
@@ -39,29 +39,15 @@ export function Rewards() {
 
   return (
     <Wrap w={1080}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '380px 1fr',
-          gap: 18,
-          alignItems: 'start',
-        }}
-      >
+      <div className="grid grid-cols-1 app:grid-cols-[380px_1fr] gap-[18px] items-start">
         <SpinWheel />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div className="flex flex-col gap-[18px]">
           <CheckIn />
           <Card pad={22}>
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: 'var(--text)',
-                marginBottom: 14,
-              }}
-            >
+            <div className="text-base font-extrabold text-text mb-3.5">
               Daily missions
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               {missions.map((m) => {
                 const iconKey =
                   m.id.includes('bet')
@@ -72,42 +58,16 @@ export function Rewards() {
                 return (
                   <div
                     key={m.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 13 }}
+                    className="flex items-center gap-[13px]"
                   >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 12,
-                        background: 'var(--glass)',
-                        border: '1px solid var(--glass-brd)',
-                        color: 'var(--accent-2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
+                    <div className="size-10 rounded-xl bg-[var(--glass)] border border-[var(--glass-brd)] text-[var(--accent-2)] flex items-center justify-center">
                       {Icon[iconKey as keyof typeof Icon]?.({ size: 20 })}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: 'var(--text)',
-                        }}
-                      >
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-text">
                         {m.label}
                       </div>
-                      <div
-                        style={{
-                          height: 5,
-                          borderRadius: 3,
-                          background: 'var(--surface-2)',
-                          overflow: 'hidden',
-                          margin: '7px 0 4px',
-                        }}
-                      >
+                      <div className="h-[5px] rounded-[3px] bg-[var(--surface-2)] overflow-hidden mt-[7px] mb-1">
                         <div
                           style={{
                             width:
@@ -117,13 +77,7 @@ export function Rewards() {
                           }}
                         />
                       </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: 'var(--text-mute)',
-                          fontWeight: 600,
-                        }}
-                      >
+                      <div className="text-[11px] text-[var(--text-mute)] font-semibold">
                         {m.progress}/{m.goal} · +{formatMoney(m.reward)} USDT
                       </div>
                     </div>
