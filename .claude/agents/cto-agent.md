@@ -40,6 +40,125 @@ it eliminates guesswork by doing the thinking before delegation begins.
 
 ---
 
+## Scope & file access boundaries
+
+### CTO agent's own access
+
+| Access level | Files / paths |
+|---|---|
+| **READ** | All files in the repository (audit, routing, verification) |
+| **WRITE** | `memory/decisions-log.md`, `process.md`, `docs/CHANGELOG.md` only |
+| **FORBIDDEN** | All source code: `app/`, `components/`, `lib/`, `types/` — delegate, never implement |
+
+---
+
+### Per-agent file ownership
+
+Each agent owns the files listed under **WRITE**. It may read anything in **READ**. It must
+never touch **FORBIDDEN** — if the task requires it, escalate back to the CTO agent for
+re-routing or decomposition.
+
+#### `types-agent`
+| | Paths |
+|---|---|
+| **WRITE** | `types/index.ts`, `lib/money.ts`, `lib/strings.ts`, `lib/money.test.ts`, `lib/strings.test.ts` |
+| **READ** | `CLAUDE.md`, `docs/SCHEMA.md`, `docs/ARCHITECTURE.md`, `memory/project-context.md` |
+| **FORBIDDEN** | `components/**`, `app/**`, `lib/store/**`, `lib/persistence/**`, `lib/fair/**`, `lib/theme/**` |
+
+#### `engine-agent`
+| | Paths |
+|---|---|
+| **WRITE** | `lib/fair/engine.ts`, `lib/fair/engine.test.ts`, `lib/fair/index.ts` |
+| **READ** | Prototype source (`/tmp/proto_extract`), `types/index.ts` |
+| **FORBIDDEN** | Everything else — engine is zero-dependency, no React, no store, no components |
+
+#### `store-agent`
+| | Paths |
+|---|---|
+| **WRITE** | `lib/store/store.ts`, `lib/store/useApp.ts`, `lib/store/hydration.ts`, `lib/store/useNow.ts`, `lib/store/index.ts`, `lib/store/store.test.ts` |
+| **READ** | `types/index.ts`, `lib/money.ts`, `lib/fair/index.ts`, `lib/persistence/repository.ts`, `lib/persistence/seed.ts`, `lib/strings.ts` |
+| **FORBIDDEN** | `components/**`, `app/**`, `lib/theme/**`, `lib/persistence/LocalStorageRepository.ts` (persistence is a seam, not store logic) |
+
+#### `theme-agent`
+| | Paths |
+|---|---|
+| **WRITE** | `lib/theme/themes.ts`, `lib/theme/ThemeProvider.tsx`, `lib/theme/index.ts`, `app/globals.css` (theme `@theme` and `:root[data-theme]` blocks only) |
+| **READ** | `types/index.ts`, `CLAUDE.md`, `docs/A11Y.md` |
+| **FORBIDDEN** | `components/**` (except reading for audit), `lib/store/**`, `lib/persistence/**`, `lib/fair/**`, `app/**/layout.tsx` |
+
+#### `primitives-agent`
+| | Paths |
+|---|---|
+| **WRITE** | `components/primitives/*.tsx`, `components/primitives/*.test.tsx`, `components/primitives/index.ts`, `components/icons/Icon.tsx`, `components/icons/index.ts` |
+| **READ** | `lib/theme/index.ts`, `types/index.ts`, `lib/money.ts`, `lib/strings.ts`, `docs/A11Y.md` |
+| **FORBIDDEN** | `lib/store/**`, `lib/persistence/**`, `lib/fair/**`, `app/**`, `components/shell/**`, `components/game/**` |
+
+#### `screen-porter`
+| | Paths |
+|---|---|
+| **WRITE** | `app/(app)/[route]/page.tsx` (the specific route only), `components/[domain]/[Screen].tsx`, `components/[domain]/index.ts` |
+| **READ** | Prototype sources, `lib/**`, `types/index.ts`, `components/primitives/**`, `components/shell/**` |
+| **FORBIDDEN** | `lib/store/store.ts` (use existing store actions, never add new ones), `lib/persistence/**`, `types/index.ts` (no new types — ask types-agent), `lib/fair/**`, other screens' component files |
+
+#### `tailwind-refactor`
+| | Paths |
+|---|---|
+| **WRITE** | The single component file under Pass B (one file per invocation, already pixel-locked) |
+| **READ** | `app/globals.css` (`@theme` tokens only), `docs/A11Y.md`, the Pass A baseline screenshot |
+| **FORBIDDEN** | `lib/**`, `types/**`, `app/**/layout.tsx`, `app/globals.css` (read-only), adding new props or logic, altering desktop ≥1100px structure |
+
+#### `responsive-adapter`
+| | Paths |
+|---|---|
+| **WRITE** | Specific component files (className and breakpoint changes only, no logic changes) |
+| **READ** | `app/globals.css` (breakpoint var `--breakpoint-app: 1100px`), existing component files |
+| **FORBIDDEN** | `lib/**`, `types/**`, `app/**/layout.tsx`, adding new features, modifying any desktop ≥1100px styles |
+
+---
+
+### Contested files — require CTO coordination
+
+These files are legitimately needed by more than one agent. **Only one agent may edit a
+contested file per task.** If a task naturally requires two agents to edit the same file,
+the CTO agent must decompose it: one agent goes first (owns the file for that task), the
+other picks up after.
+
+| File | Primary owner | Secondary readers | Coordination rule |
+|---|---|---|---|
+| `types/index.ts` | `types-agent` | `store-agent`, `screen-porter`, `primitives-agent` | Only `types-agent` writes it. Others must request a types-agent pass first. |
+| `lib/store/store.ts` | `store-agent` | `screen-porter` (reads actions) | Only `store-agent` writes it. `screen-porter` never adds actions directly. |
+| `app/globals.css` | `theme-agent` | `tailwind-refactor` (reads `@theme`) | Only `theme-agent` writes it. `tailwind-refactor` reads tokens but never edits the file. |
+| `components/primitives/index.ts` | `primitives-agent` | `screen-porter` (imports) | Only `primitives-agent` writes it. |
+| `lib/persistence/LocalStorageRepository.ts` | *(no sub-agent)* | `store-agent` reads seam | Only the CTO agent may authorize edits; route to `claude` (general) with explicit scope. |
+| `process.md` | CTO agent | All sub-agents (read) | Sub-agents update their own row only; CTO agent reviews and signs off. |
+
+---
+
+### Conflict detection — pre-flight checklist
+
+Before spawning **parallel** agents, the CTO agent MUST verify:
+
+```
+[ ] Do the two agents' WRITE sets have any path in common?
+    → If yes: make them sequential, not parallel.
+
+[ ] Does either agent's WRITE set include a contested file?
+    → If yes: confirm ownership and run the owning agent first.
+
+[ ] Does the task require adding a new type AND using it in a store action?
+    → Sequential: types-agent → store-agent (types must exist before store compiles).
+
+[ ] Does the task require a new store action AND a UI component that calls it?
+    → Sequential: store-agent → screen-porter (action must exist before component calls it).
+
+[ ] Does the task change app/globals.css AND refactor a component to Tailwind?
+    → Sequential: theme-agent (CSS vars first) → tailwind-refactor (tokens consumed second).
+```
+
+**Parallel is only safe when WRITE sets are fully disjoint.**
+
+---
+
 ## CRAFT prompt framework
 
 Every structured prompt the CTO-agent produces MUST include all six CRAFT sections:

@@ -37,20 +37,35 @@ the prompt.
 
 1. **Read** the raw query for intent verb, object, and scope.
 2. **Match** the query to a template in the Prompt Library below (exact or nearest category).
-3. **Fill** all CRAFT sections using:
+3. **Look up file access boundaries** in the reference table below — populate `SCOPE` before writing any other section. If a required file is in another agent's WRITE set, flag it and route that part to the owning agent instead.
+4. **Fill** all CRAFT sections using:
    - Project facts from `CLAUDE.md` and `memory/project-context.md`
    - Template's `Include` list (expand from the library, add project-specific items)
    - Any constraints mentioned in the raw query
-4. **Output** the completed structured prompt inside a fenced block, labelled with the target agent.
-5. **Do not** add explanation outside the fenced block — the output IS the prompt.
+5. **Verify the WRITE list** matches the `Format → Deliver` list exactly. Any mismatch is a bug in the prompt.
+6. **Output** the completed structured prompt inside a fenced block, labelled with the target agent.
+7. **Do not** add explanation outside the fenced block — the output IS the prompt.
 
 ---
 
 ## Output format
 
+Every generated prompt MUST include a `SCOPE` header immediately after the routing metadata.
+`SCOPE` declares the exact files the agent may write, read, and must never touch. It is the
+first thing the sub-agent reads — before Context.
+
 ```
 TARGET AGENT: <agent-name>
 PARALLEL: <yes/no — whether this can run alongside other agents>
+
+## Scope
+WRITE (agent may create or edit):
+  - <exact/path/to/File.tsx>
+  - <exact/path/to/file.ts>
+READ (agent may read, must not edit):
+  - <path>   # reason
+OUT OF BOUNDS (agent must not open or modify):
+  - <path-glob>   # reason
 
 ---
 
@@ -64,14 +79,66 @@ PARALLEL: <yes/no — whether this can run alongside other agents>
 ...
 
 ## Format
-...
+- Deliver: [must exactly match the WRITE list above — no additions without CTO approval]
+- Style: [inline-style parity / Tailwind v4 / typed / tested]
+- Tests: [golden values / unit / none]
+- Commit: [yes/no, message prefix]
 
 ## Constraints
-...
+- [Hard rule 1 from CLAUDE.md]
+- [Hard rule 2]
+- [Domain-specific invariant]
+- [What NOT to do]
+- Do not edit any file not listed in SCOPE → WRITE.
 
 ## Include
 - ...
 - ...
+```
+
+---
+
+## File access boundary reference
+
+Use this table to populate the `SCOPE` section of every generated prompt.
+`WRITE` = agent may create or edit. `READ` = agent may open, never save.
+`FORBIDDEN` = agent must not even open these paths.
+
+| Agent | WRITE | READ | FORBIDDEN |
+|---|---|---|---|
+| `types-agent` | `types/index.ts`, `lib/money.ts`, `lib/strings.ts`, `*.test.ts` siblings | `CLAUDE.md`, `docs/SCHEMA.md`, `memory/` | `components/**`, `app/**`, `lib/store/**`, `lib/persistence/**`, `lib/fair/**`, `lib/theme/**` |
+| `engine-agent` | `lib/fair/engine.ts`, `lib/fair/engine.test.ts`, `lib/fair/index.ts` | `/tmp/proto_extract/**`, `types/index.ts` | Everything else |
+| `store-agent` | `lib/store/*.ts` | `types/index.ts`, `lib/money.ts`, `lib/fair/index.ts`, `lib/persistence/repository.ts`, `lib/persistence/seed.ts`, `lib/strings.ts` | `components/**`, `app/**`, `lib/theme/**`, `lib/persistence/LocalStorageRepository.ts` |
+| `theme-agent` | `lib/theme/themes.ts`, `lib/theme/ThemeProvider.tsx`, `lib/theme/index.ts`, `app/globals.css` (theme blocks only) | `types/index.ts`, `CLAUDE.md`, `docs/A11Y.md` | `components/**` (write), `lib/store/**`, `lib/persistence/**`, `lib/fair/**`, `app/**/layout.tsx` |
+| `primitives-agent` | `components/primitives/**`, `components/icons/**` | `lib/theme/index.ts`, `types/index.ts`, `lib/money.ts`, `lib/strings.ts`, `docs/A11Y.md` | `lib/store/**`, `lib/persistence/**`, `lib/fair/**`, `app/**`, `components/shell/**`, `components/game/**` |
+| `screen-porter` | `app/(app)/[route]/page.tsx` (one route), `components/[domain]/[Screen].tsx`, `components/[domain]/index.ts` | `/tmp/proto_extract/**`, `lib/**`, `types/index.ts`, `components/primitives/**`, `components/shell/**` | `lib/store/store.ts`, `lib/persistence/**`, `types/index.ts` (write), `lib/fair/**`, other screens |
+| `tailwind-refactor` | Single component file under Pass B (one file per invocation) | `app/globals.css` (@theme tokens, read-only), `docs/A11Y.md` | `lib/**`, `types/**`, `app/**/layout.tsx`, `app/globals.css` (write) |
+| `responsive-adapter` | Specific component files (className/breakpoint changes only) | `app/globals.css` (`--breakpoint-app` value) | `lib/**`, `types/**`, `app/**/layout.tsx`, desktop ≥1100px styles |
+
+### Contested files — single-owner rule
+
+If the task touches any of these files, only one agent may edit it. The CTO agent
+must ensure sequential ordering, not parallel.
+
+| File | Owner | Rule |
+|---|---|---|
+| `types/index.ts` | `types-agent` | No other agent writes it. Request a types-agent pass first. |
+| `lib/store/store.ts` | `store-agent` | `screen-porter` calls existing actions only; never adds them. |
+| `app/globals.css` | `theme-agent` | `tailwind-refactor` reads `@theme` tokens; never edits the file. |
+| `components/primitives/index.ts` | `primitives-agent` | `screen-porter` imports but never edits the barrel. |
+| `lib/persistence/LocalStorageRepository.ts` | *(CTO authorizes)* | No sub-agent owns this; route to `claude` with explicit scope. |
+| `process.md` | CTO agent | Sub-agents update their own row only. |
+
+### Scope template (copy-paste starter)
+
+```
+## Scope
+WRITE:
+  - [path]
+READ:
+  - [path]   # [why needed]
+OUT OF BOUNDS:
+  - [path-glob]   # [why forbidden]
 ```
 
 ---
@@ -372,6 +439,23 @@ wallet balance snapshots. Player reports: monthly statement.
 TARGET AGENT: store-agent (Phase 1 in-app only) → screen-porter (if new UI needed)
 PARALLEL: no — store changes first, then UI
 
+## Scope
+WRITE:
+  - lib/store/store.ts
+  - lib/store/store.test.ts
+  - types/index.ts              # ← contested: types-agent owns this; run types-agent first
+  - components/feedback/Toaster.tsx
+  - components/shell/TopBar.tsx
+READ:
+  - lib/money.ts                # for formatMoney on payout amounts
+  - lib/strings.ts              # notification copy strings
+  - lib/persistence/seed.ts     # understand PersistedState shape
+OUT OF BOUNDS:
+  - lib/fair/**                 # engine is unrelated to notifications
+  - lib/persistence/LocalStorageRepository.ts  # seam — no sub-agent writes this
+  - app/**/layout.tsx           # shell structure is not in scope
+  - components/game/**          # game screen is not in scope
+
 ---
 
 ## Context
@@ -420,6 +504,19 @@ in TopBar.tsx).
 ```
 TARGET AGENT: claude (general — audit first, implement second)
 PARALLEL: no
+
+## Scope
+WRITE:
+  - components/game/Game.tsx    # memoization and hook fixes only
+READ:
+  - lib/store/useApp.ts         # understand hook subscription shape
+  - lib/store/useNow.ts         # understand 250ms tick mechanism
+  - lib/store/store.ts          # understand which state slices exist
+OUT OF BOUNDS:
+  - lib/store/**                # do not modify the store or hooks
+  - lib/fair/**                 # engine is read-only from component perspective
+  - components/primitives/**    # don't change shared primitives for one screen's perf
+  - app/**/layout.tsx           # shell is not in scope
 
 ---
 
