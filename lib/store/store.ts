@@ -457,8 +457,8 @@ export const useStore = create<AppState>()((set, get) => ({
   // ── Auth / navigation ─────────────────────────────────────────────────────
   setAuthed(authed, user) {
     set((s) => ({
-      auth: { authed, user: user ?? s.auth.user },
-      user: user ?? s.user,
+      auth: { authed, user: authed ? (user ?? s.auth.user) : undefined },
+      user: authed ? (user ?? s.user) : s.user,
     }));
   },
 

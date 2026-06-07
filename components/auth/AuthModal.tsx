@@ -86,17 +86,13 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         if (err) throw err;
         setStep('otp');
       } else {
-        // Email: Supabase sends a magic-link (template editing requires custom SMTP).
-        // Once custom SMTP + template {{ .Token }} is configured this becomes OTP too.
+        // Email: sends a 6-digit OTP via custom SMTP template using {{ .Token }}
         const { error: err } = await supabase.auth.signInWithOtp({
           email: input,
-          options: {
-            shouldCreateUser: true,
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/lobby`,
-          },
+          options: { shouldCreateUser: true },
         });
         if (err) throw err;
-        setStep('magic-link-sent');
+        setStep('otp');
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to send code');
@@ -110,11 +106,10 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     setError('');
     try {
       const input = val.trim();
-      const { data, error: err } = await supabase.auth.verifyOtp({
-        phone: input,
-        token: otp,
-        type: 'sms',
-      });
+      const otpPayload = isPhone
+        ? { phone: input, token: otp, type: 'sms' as const }
+        : { email: input, token: otp, type: 'email' as const };
+      const { data, error: err } = await supabase.auth.verifyOtp(otpPayload);
       if (err) throw err;
 
       const supaUser = data.user;
@@ -126,6 +121,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       app.setAuthed(true, user);
       app.pushToast(STRINGS.auth.welcome, 'success');
       onClose();
+      router.refresh();
       router.push(ROUTES.home);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Verification failed');
@@ -214,22 +210,22 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               {STRINGS.auth.verifyCode}
             </div>
             <div style={{ fontSize: 14, color: 'var(--text-mute)', margin: '6px 0 22px' }}>
-              Enter the 6-digit code sent to {val}
+              Enter the 8-digit code sent to {val}
             </div>
             {error && (
               <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 12 }}>{error}</div>
             )}
             <input
               value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="000000"
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="00000000"
               style={{ ...webInput, letterSpacing: '8px', textAlign: 'center', fontSize: 22 }}
             />
             <Button
               full
               size="lg"
               style={{ marginTop: 14 }}
-              disabled={otp.length < 6 || loading}
+              disabled={otp.length < 8 || loading}
               onClick={verifyOtp}
             >
               {loading ? 'Verifying…' : STRINGS.auth.verify}
@@ -238,7 +234,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               onClick={() => { setStep('contact'); setOtp(''); setError(''); }}
               style={{ display: 'block', margin: '14px auto 0', background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 13, cursor: 'pointer' }}
             >
-              ← Use a different number
+              ← Use a different {isPhone ? 'number' : 'email'}
             </button>
           </>
         )}

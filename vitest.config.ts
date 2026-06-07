@@ -18,5 +18,12 @@ export default defineConfig({
     globals: false,
     setupFiles: ['./tests/setup.ts'],
     exclude: ['tests/e2e/**', 'node_modules/**'],
+    server: {
+      deps: {
+        // html-encoding-sniffer (pulled in by jsdom) uses require() on an ESM
+        // package (@exodus/bytes). Inlining it lets Vite transform it to ESM.
+        inline: ['html-encoding-sniffer', '@exodus/bytes'],
+      },
+    },
   },
 });
