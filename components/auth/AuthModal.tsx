@@ -20,6 +20,9 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives';
 import { createSupabaseClient } from '@/lib/supabase/client';
+
+// Single client instance — avoids re-creating on every render/state change
+const supabase = createSupabaseClient();
 import { ROUTES } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import STRINGS from '@/lib/strings';
@@ -67,8 +70,6 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 
   if (!mounted || !open) return null;
 
-  const supabase = createSupabaseClient();
-
   const isPhone = /^\+?\d/.test(val.trim());
 
   const sendOtp = async () => {
@@ -78,7 +79,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       const input = val.trim();
       const { error: err } = isPhone
         ? await supabase.auth.signInWithOtp({ phone: input })
-        : await supabase.auth.signInWithOtp({ email: input });
+        // No emailRedirectTo — forces OTP code delivery (not magic link).
+        // The Supabase "Magic Link" email template must use {{ .Token }}.
+        : await supabase.auth.signInWithOtp({
+            email: input,
+            options: { shouldCreateUser: true },
+          });
       if (err) throw err;
       setStep('otp');
     } catch (e: unknown) {
