@@ -129,10 +129,11 @@ function Board({
                   <span
                     key={i}
                     style={{
-                      background: 'rgba(0,0,0,.28)',
+                      background: 'color-mix(in srgb, var(--accent-ink) 18%, transparent)',
+                      color: 'var(--accent-ink)',
                       animation: locked ? 'pulse .8s infinite' : 'none',
                     }}
-                    className="text-white rounded-lg py-[5px] px-2.5 text-[32px] font-black tabular-nums"
+                    className="rounded-lg py-[5px] px-2.5 text-[32px] font-black tabular-nums"
                   >
                     {ch}
                   </span>

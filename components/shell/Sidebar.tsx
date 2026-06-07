@@ -94,6 +94,21 @@ export function Sidebar() {
         ))}
       </nav>
 
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+        <NavButton
+          label={STRINGS.titles.profile}
+          icon="user"
+          active={activeKey === 'profile'}
+          onClick={() => router.push(ROUTES.profile)}
+        />
+        <NavButton
+          label={STRINGS.titles.settings}
+          icon="settings"
+          active={activeKey === 'settings'}
+          onClick={() => router.push(ROUTES.settings)}
+        />
+      </div>
+
       <div style={{ marginBottom: 12 }}>
         <VipMiniCard
           level={app.vip.level}
