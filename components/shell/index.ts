@@ -15,3 +15,4 @@ export { NavButton } from './NavButton';
 export type { NavButtonProps } from './NavButton';
 export { NavLogout } from './NavLogout';
 export { VipMiniCard } from './VipMiniCard';
+export { ErrorBoundary } from './ErrorBoundary';

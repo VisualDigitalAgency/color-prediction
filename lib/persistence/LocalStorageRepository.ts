@@ -65,8 +65,17 @@ function migrate(raw: unknown): PersistedState | null {
   if (typeof candidate.version !== 'number') return null;
   // Future: `if (candidate.version < SCHEMA_VERSION) { ...transform... }`
   if (candidate.version !== SCHEMA_VERSION) return null;
-  // Minimal structural sanity — the durable slices must be present.
-  if (!candidate.wallet || !candidate.settings) return null;
+  // Required durable slices must be present.
+  if (!candidate.wallet || !candidate.settings || !candidate.auth) return null;
+  // Wallet fields must all be integer minor-units (numbers). Catches stringified
+  // values, NaN, or partial writes from an older schema shape.
+  const w = candidate.wallet;
+  if (
+    typeof w.main !== 'number' ||
+    typeof w.bonus !== 'number' ||
+    typeof w.winning !== 'number' ||
+    typeof w.referral !== 'number'
+  ) return null;
   return candidate as PersistedState;
 }
 
