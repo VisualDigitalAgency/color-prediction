@@ -1,14 +1,14 @@
 /**
- * components/auth/AuthModal.tsx — Supabase OTP sign-in portal modal.
+ * components/auth/AuthModal.tsx — Supabase sign-in portal modal.
  *
- * Phase 2: real OTP via Supabase Auth (`signInWithOtp` / `verifyOtp`).
- * Supports phone (SMS) or email (magic-link OTP). The UX is unchanged from the
- * Phase-1 prototype port — same two-step phone → code flow, same inline styles.
+ * Phone → 6-digit SMS OTP (signInWithOtp + verifyOtp type:'sms')
+ * Email → magic link (signInWithOtp sends a sign-in link to the inbox).
+ *         Once Supabase custom SMTP is configured, the Magic Link template
+ *         can be changed to {{ .Token }} to send a 6-digit code instead.
  *
- * SUCCESS FLOW:
- *   verifyOtp → Supabase sets session cookie (via @supabase/ssr) → middleware
- *   refreshes on next request → store hydrates real user from session.
- *   app.setAuthed(true, user) syncs Zustand for immediate UI update.
+ * The magic-link callback is handled by /auth/callback (PKCE flow via
+ * @supabase/ssr). For now the email step shows a "check your inbox" screen
+ * rather than a code entry field.
  */
 
 'use client';
@@ -20,13 +20,13 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives';
 import { createSupabaseClient } from '@/lib/supabase/client';
-
-// Single client instance — avoids re-creating on every render/state change
-const supabase = createSupabaseClient();
 import { ROUTES } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import STRINGS from '@/lib/strings';
 import type { User } from '@/types';
+
+// Single client instance per page — avoids re-creating on every render
+const supabase = createSupabaseClient();
 
 const webInput: React.CSSProperties = {
   width: '100%',
@@ -47,11 +47,13 @@ export interface AuthModalProps {
   onClose: () => void;
 }
 
+type Step = 'contact' | 'otp' | 'magic-link-sent';
+
 export function AuthModal({ open, onClose }: AuthModalProps) {
   const app = useApp();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [step, setStep] = useState<Step>('contact');
   const [val, setVal] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 
   useEffect(() => {
     if (open) {
-      setStep('phone');
+      setStep('contact');
       setVal('');
       setOtp('');
       setError('');
@@ -70,6 +72,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 
   if (!mounted || !open) return null;
 
+  // Phone: starts with + or a digit. Email: anything else.
   const isPhone = /^\+?\d/.test(val.trim());
 
   const sendOtp = async () => {
@@ -77,16 +80,24 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     setError('');
     try {
       const input = val.trim();
-      const { error: err } = isPhone
-        ? await supabase.auth.signInWithOtp({ phone: input })
-        // No emailRedirectTo — forces OTP code delivery (not magic link).
-        // The Supabase "Magic Link" email template must use {{ .Token }}.
-        : await supabase.auth.signInWithOtp({
-            email: input,
-            options: { shouldCreateUser: true },
-          });
-      if (err) throw err;
-      setStep('otp');
+      if (isPhone) {
+        // SMS: Supabase sends a 6-digit code directly
+        const { error: err } = await supabase.auth.signInWithOtp({ phone: input });
+        if (err) throw err;
+        setStep('otp');
+      } else {
+        // Email: Supabase sends a magic-link (template editing requires custom SMTP).
+        // Once custom SMTP + template {{ .Token }} is configured this becomes OTP too.
+        const { error: err } = await supabase.auth.signInWithOtp({
+          email: input,
+          options: {
+            shouldCreateUser: true,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/lobby`,
+          },
+        });
+        if (err) throw err;
+        setStep('magic-link-sent');
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to send code');
     } finally {
@@ -99,39 +110,19 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     setError('');
     try {
       const input = val.trim();
-      const { data, error: err } = isPhone
-        ? await supabase.auth.verifyOtp({ phone: input, token: otp, type: 'sms' })
-        : await supabase.auth.verifyOtp({ email: input, token: otp, type: 'email' });
+      const { data, error: err } = await supabase.auth.verifyOtp({
+        phone: input,
+        token: otp,
+        type: 'sms',
+      });
       if (err) throw err;
 
       const supaUser = data.user;
       if (!supaUser) throw new Error('No user returned');
 
-      // Upsert profile row (created_at epoch ms)
-      await supabase.from('profiles').upsert({
-        id: supaUser.id,
-        phone: supaUser.phone ?? null,
-        created_at: Date.now(),
-      });
+      await provisionUserRows(supaUser.id, supaUser.phone ?? null);
 
-      // Upsert wallet (seed defaults enforced by DB; upsert won't overwrite existing)
-      await supabase.from('wallets').upsert({ user_id: supaUser.id }, { ignoreDuplicates: true });
-
-      // Upsert settings
-      await supabase.from('settings').upsert({ user_id: supaUser.id }, { ignoreDuplicates: true });
-
-      // Upsert vip
-      await supabase.from('vip').upsert({ user_id: supaUser.id }, { ignoreDuplicates: true });
-
-      const user: User = {
-        id: supaUser.id,
-        handle: supaUser.phone ?? supaUser.email ?? 'Player',
-        contact: supaUser.phone ?? supaUser.email ?? '',
-        joinedAt: new Date(supaUser.created_at).getTime(),
-        kycLevel: 0,
-        vipLevel: 0,
-      };
-
+      const user = buildUser(supaUser);
       app.setAuthed(true, user);
       app.pushToast(STRINGS.auth.welcome, 'success');
       onClose();
@@ -171,6 +162,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           animation: 'popIn .3s',
         }}
       >
+        {/* Icon */}
         <div
           style={{
             width: 48,
@@ -186,17 +178,18 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         >
           {Icon.target({ size: 26, color: 'var(--accent-ink)' })}
         </div>
-        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)' }}>
-          {step === 'phone' ? STRINGS.auth.welcomeBack : STRINGS.auth.verifyCode}
-        </div>
-        <div style={{ fontSize: 14, color: 'var(--text-mute)', margin: '6px 0 22px' }}>
-          {step === 'phone' ? STRINGS.auth.signInPrompt : STRINGS.auth.otpPrompt}
-        </div>
-        {error && (
-          <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 12 }}>{error}</div>
-        )}
-        {step === 'phone' ? (
-          <div>
+
+        {step === 'contact' && (
+          <>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)' }}>
+              {STRINGS.auth.welcomeBack}
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-mute)', margin: '6px 0 22px' }}>
+              {STRINGS.auth.signInPrompt}
+            </div>
+            {error && (
+              <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 12 }}>{error}</div>
+            )}
             <input
               value={val}
               onChange={(e) => setVal(e.target.value)}
@@ -212,26 +205,65 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             >
               {loading ? 'Sending…' : STRINGS.auth.sendOtp}
             </Button>
-          </div>
-        ) : (
-          <div>
+          </>
+        )}
+
+        {step === 'otp' && (
+          <>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)' }}>
+              {STRINGS.auth.verifyCode}
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-mute)', margin: '6px 0 22px' }}>
+              Enter the 6-digit code sent to {val}
+            </div>
+            {error && (
+              <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 12 }}>{error}</div>
+            )}
             <input
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder={STRINGS.auth.otpPlaceholder}
+              placeholder="000000"
               style={{ ...webInput, letterSpacing: '8px', textAlign: 'center', fontSize: 22 }}
             />
             <Button
               full
               size="lg"
               style={{ marginTop: 14 }}
-              disabled={otp.length < 4 || loading}
+              disabled={otp.length < 6 || loading}
               onClick={verifyOtp}
             >
               {loading ? 'Verifying…' : STRINGS.auth.verify}
             </Button>
-          </div>
+            <button
+              onClick={() => { setStep('contact'); setOtp(''); setError(''); }}
+              style={{ display: 'block', margin: '14px auto 0', background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 13, cursor: 'pointer' }}
+            >
+              ← Use a different number
+            </button>
+          </>
         )}
+
+        {step === 'magic-link-sent' && (
+          <>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)' }}>
+              Check your inbox
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-mute)', margin: '6px 0 22px', lineHeight: 1.6 }}>
+              We sent a sign-in link to <strong style={{ color: 'var(--text)' }}>{val}</strong>.
+              Click the link in your email to log in — it expires in 1 hour.
+            </div>
+            <Button full size="lg" onClick={onClose}>
+              Close
+            </Button>
+            <button
+              onClick={() => { setStep('contact'); setVal(''); setError(''); }}
+              style={{ display: 'block', margin: '14px auto 0', background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 13, cursor: 'pointer' }}
+            >
+              ← Use a different email
+            </button>
+          </>
+        )}
+
         <div style={{ fontSize: 11.5, color: 'var(--text-mute)', textAlign: 'center', marginTop: 18 }}>
           {STRINGS.auth.legalFooter}
         </div>
@@ -242,3 +274,25 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 }
 
 export default AuthModal;
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+async function provisionUserRows(userId: string, phone: string | null) {
+  await Promise.all([
+    supabase.from('profiles').upsert({ id: userId, phone, created_at: Date.now() }),
+    supabase.from('wallets').upsert({ user_id: userId }, { ignoreDuplicates: true }),
+    supabase.from('settings').upsert({ user_id: userId }, { ignoreDuplicates: true }),
+    supabase.from('vip').upsert({ user_id: userId }, { ignoreDuplicates: true }),
+  ]);
+}
+
+function buildUser(supaUser: { id: string; phone?: string | null; email?: string | null; created_at: string }): User {
+  return {
+    id: supaUser.id,
+    handle: supaUser.phone ?? supaUser.email ?? 'Player',
+    contact: supaUser.phone ?? supaUser.email ?? '',
+    joinedAt: new Date(supaUser.created_at).getTime(),
+    kycLevel: 0,
+    vipLevel: 0,
+  };
+}
