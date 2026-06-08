@@ -19,6 +19,7 @@
  */
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { Icon } from '@/components/icons/Icon';
 import { NavButton } from '@/components/shell/NavButton';
 import { NavLogout } from '@/components/shell/NavLogout';
@@ -239,8 +240,14 @@ export function MobileNav({ drawerOpen, onOpen, onClose }: Props) {
 
           {/* Logout */}
           <NavLogout
-            onLogout={() => {
+            onLogout={async () => {
+              const supabase = createBrowserClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              );
+              await supabase.auth.signOut();
               app.setAuthed(false);
+              router.refresh();
               router.replace('/');
             }}
           />

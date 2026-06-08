@@ -153,6 +153,8 @@ const STRINGS = {
     register: 'Register',
     legalFooter: '18+ only · Play responsibly',
     welcome: 'Welcome to AuraWin!',
+    continueWithGoogle: 'Continue with Google',
+    orDivider: 'or',
   },
 
   // ── Game / Wingo ─────────────────────────────────────────────────────

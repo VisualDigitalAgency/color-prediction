@@ -129,10 +129,11 @@ function Board({
                   <span
                     key={i}
                     style={{
-                      background: 'rgba(0,0,0,.28)',
+                      background: 'color-mix(in srgb, var(--accent-ink) 18%, transparent)',
+                      color: 'var(--accent-ink)',
                       animation: locked ? 'pulse .8s infinite' : 'none',
                     }}
-                    className="text-white rounded-lg py-[5px] px-2.5 text-[32px] font-black tabular-nums"
+                    className="rounded-lg py-[5px] px-2.5 text-[32px] font-black tabular-nums"
                   >
                     {ch}
                   </span>
@@ -192,7 +193,7 @@ function Board({
               style={{
                 background: c[3],
                 boxShadow: c[4],
-                border: isSel('color', c[0]) ? '2px solid #fff' : '2px solid transparent',
+                border: isSel('color', c[0]) ? '2px solid var(--accent)' : '2px solid transparent',
               }}
               className="py-5 rounded-[var(--radius-sm)] cursor-pointer text-white flex flex-col items-center gap-[3px] transition-transform duration-[120ms]"
               onMouseDown={(e) =>
@@ -223,7 +224,7 @@ function Board({
               onClick={() => pick('number', n)}
               style={{
                 background: numColorStyle(n),
-                border: isSel('number', n) ? '3px solid #fff' : '3px solid transparent',
+                border: isSel('number', n) ? '3px solid var(--accent)' : '3px solid transparent',
                 boxShadow: '0 4px 12px rgba(0,0,0,.35)',
               }}
               className="aspect-square rounded-full cursor-pointer text-white text-xl font-extrabold transition-transform duration-[120ms]"
@@ -248,8 +249,8 @@ function Board({
         <div className="grid grid-cols-2 gap-3.5">
           {(
             [
-              ['big', 'BIG', '5 – 9', 'linear-gradient(135deg,#ff9a3d,#ff5a3d)'],
-              ['small', 'SMALL', '0 – 4', 'linear-gradient(135deg,#3da5ff,#7c5cff)'],
+              ['big', 'BIG', '5 – 9', 'var(--big-grad)'],
+              ['small', 'SMALL', '0 – 4', 'var(--small-grad)'],
             ] as const
           ).map((s) => (
             <button
@@ -257,7 +258,7 @@ function Board({
               onClick={() => pick('size', s[0])}
               style={{
                 background: s[3],
-                border: isSel('size', s[0]) ? '2px solid #fff' : '2px solid transparent',
+                border: isSel('size', s[0]) ? '2px solid var(--accent)' : '2px solid transparent',
               }}
               className="py-4 rounded-[var(--radius-sm)] cursor-pointer text-white flex items-center justify-center gap-2.5"
             >
@@ -315,8 +316,8 @@ function BetSlip({
     ? numColorStyle(Number(sel.pick))
     : sel.kind === 'size'
     ? sel.pick === 'big'
-      ? 'linear-gradient(135deg,#ff9a3d,#ff5a3d)'
-      : 'linear-gradient(135deg,#3da5ff,#7c5cff)'
+      ? 'var(--big-grad)'
+      : 'var(--small-grad)'
     : sel.pick === 'green'
     ? 'var(--green)'
     : sel.pick === 'red'

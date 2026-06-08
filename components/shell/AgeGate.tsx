@@ -102,7 +102,25 @@ export function AgeGate() {
         <Button
           full
           size="lg"
-          onClick={() => app.setSetting('ageConfirmed', true)}
+          onClick={async () => {
+            // Persist to Supabase settings table if user is authed (Phase 2)
+            // Falls back gracefully to localStorage-only in dev/Phase-1 mode
+            if (typeof window !== 'undefined') {
+              try {
+                const { createSupabaseClient } = await import('@/lib/supabase/client');
+                const supabase = createSupabaseClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                  await supabase
+                    .from('settings')
+                    .upsert({ user_id: user.id, age_confirmed: true });
+                }
+              } catch {
+                // non-fatal: store still updates below
+              }
+            }
+            app.setSetting('ageConfirmed', true);
+          }}
         >
           {STRINGS.ageGate.cta}
         </Button>

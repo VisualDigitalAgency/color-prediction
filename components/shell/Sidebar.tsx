@@ -21,6 +21,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 
 import { Icon } from '@/components/icons/Icon';
 import { NavButton } from '@/components/shell/NavButton';
@@ -93,6 +94,21 @@ export function Sidebar() {
         ))}
       </nav>
 
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+        <NavButton
+          label={STRINGS.titles.profile}
+          icon="user"
+          active={activeKey === 'profile'}
+          onClick={() => router.push(ROUTES.profile)}
+        />
+        <NavButton
+          label={STRINGS.titles.settings}
+          icon="settings"
+          active={activeKey === 'settings'}
+          onClick={() => router.push(ROUTES.settings)}
+        />
+      </div>
+
       <div style={{ marginBottom: 12 }}>
         <VipMiniCard
           level={app.vip.level}
@@ -104,8 +120,14 @@ export function Sidebar() {
       </div>
 
       <NavLogout
-        onLogout={() => {
+        onLogout={async () => {
+          const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          );
+          await supabase.auth.signOut();
           app.setAuthed(false);
+          router.refresh();
           router.replace('/');
         }}
       />

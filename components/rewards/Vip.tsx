@@ -27,11 +27,11 @@ const H2 = ({ children }: { children: React.ReactNode }) => (
 );
 
 const TIERS = [
-  [1, 'Bronze', '0', '0.3%', '#cd7f4a'],
-  [2, 'Silver', '2K', '0.5%', '#b8c0cc'],
-  [3, 'Platinum', '6K', '0.8%', '#1fe0ff'],
-  [4, 'Diamond', '20K', '1.2%', '#8b5cff'],
-  [5, 'Crown', '80K', '1.8%', '#ffc63d'],
+  [1, 'Bronze',   '0',   '0.3%', '#cd7f4a'],
+  [2, 'Silver',   '2K',  '0.5%', '#b8c0cc'],
+  [3, 'Platinum', '6K',  '0.8%', 'var(--accent-2)'],
+  [4, 'Diamond',  '20K', '1.2%', 'var(--violet)'],
+  [5, 'Crown',    '80K', '1.8%', 'var(--gold)'],
 ] as const;
 
 export function Vip() {

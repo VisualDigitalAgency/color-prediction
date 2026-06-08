@@ -9,7 +9,7 @@
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zustand
 **Branch:** `claude/prototype-web-app-conversion-f3ZAg`
 **Prototype source of truth:** `/tmp/proto_extract` (re-extract from `Color_Prediction_1.zip`)
-**Last updated:** 2026-06-06 · **Current step:** 15 (Polish + finalize docs) — ☑ done; **Phase 1 COMPLETE**
+**Last updated:** 2026-06-07 · **Current step:** Phase 2 M1 (Supabase schema + Auth wiring) — ◑ in progress
 **PR:** [#1](https://github.com/VisualDigitalAgency/color-prediction/pull/1) (draft)
 
 ---
@@ -125,6 +125,19 @@ Game→`web-game.png`/`04-web-02.png` · themes→`01/02/03-web-*` (neon/fintech
   findings into `docs/PRD.md` (competitor section) and `docs/DECISIONS.md`.
 - Tailwind is **v4** (CSS-first). Plan's `tailwind.config.ts` → realized as `@theme` in
   `app/globals.css`. Recorded in ADR 0001 / TECHSTACK.
+
+---
+
+## Phase 2 milestones
+
+| # | Milestone | Status | Notes |
+|---|-----------|--------|-------|
+| M1 | Supabase project + DB schema + Auth wiring | ◑ | Schema applied; packages installed; client/server factories + middleware + AuthModal (real OTP) + AgeGate updated; `tsc` clean. **Pending:** Supabase Auth providers enabled in dashboard; `.env.local` with real keys on dev machine |
+| M2 | SupabaseRepository (replaces LocalStorageRepository) | ☑ | SupabaseRepository + NullRepository + ApiError + factory; API routes bets/deposit/withdraw; store rollback + swappable repo; hydration swaps to SupabaseRepository on session; tsc clean; 152 tests pass; build ✓ |
+| M3a | Server-authoritative settlement + Realtime push | ☐ | Parallel with M3b |
+| M3b | Commit-reveal fairness engine (ADR 0006) | ☐ | Parallel with M3a |
+| M4 | Withdrawal & KYC integration | ☐ | Depends on M2 |
+| M5 | Observability, compliance & launch hardening | ☐ | Depends on M4 |
 
 ## Changelog
 See `docs/CHANGELOG.md` (human-readable) — this tracker links the work to it.
